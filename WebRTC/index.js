@@ -1,10 +1,13 @@
 'use strict';
 
+const handRecognitionOpenCV = require('../opencv4nodejs/SGBRGS-HandRecognition.js');
 const express = require('express');
 var socketIO = require('socket.io');
 const path = require('path');
 var nodeStatic = require('node-static');
 const PORT = process.env.PORT || 5000
+
+var testOpenCV = handRecognitionOpenCV.handGestureResult('../opencv4nodejs/data/hand-gesture.mp4');
 
 var app = express()
     .use(express.static(path.join(__dirname, 'public')))
@@ -61,4 +64,5 @@ io.sockets.on('connection', function (socket) {
             });
         }
     });
+	
 });

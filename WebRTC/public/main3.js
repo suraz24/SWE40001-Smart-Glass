@@ -30,26 +30,26 @@ var socket = io.connect();
 
 if (room !== '') {
     socket.emit('create or join', room);
-    console.log('Attempted to create or  join room', room);
+    console.log('CLIENT: Attempted to create or  join room', room);
 }
 
 socket.on('created', function (room) {
-    console.log('Created room ' + room);
+    console.log('CLIENT: Created room ' + room);
     isInitiator = true;
 });
 
 socket.on('full', function (room) {
-    console.log('Room ' + room + ' is full');
+    console.log('CLIENT: Room ' + room + ' is full');
 });
 
 socket.on('join', function (room) {
-    console.log('Another peer made a request to join room ' + room);
-    console.log('This peer is the initiator of room ' + room + '!');
+    console.log('CLIENT: Another peer made a request to join room ' + room);
+    console.log('CLIENT: This peer is the initiator of room ' + room + '!');
     isChannelReady = true;
 });
 
 socket.on('joined', function (room) {
-    console.log('joined: ' + room);
+    console.log('CLIENT: joined: ' + room);
     isChannelReady = true;
 });
 
@@ -60,16 +60,17 @@ socket.on('log', function (array) {
 ////////////////////////////////////////////////
 
 function sendMessage(message) {
-    console.log('Client sending message: ', message);
+    console.log('CLIENT: Client sending message: ', message);
     socket.emit('message', message);
 }
 
 // This client receives a message
 socket.on('message', function (message) {
-    console.log('Client received message:', message);
+    console.log('CLIENT: Client received message:', message);
     if (message === 'got user media') {
         maybeStart();
-    } else if (message.type === 'offer') {
+    } 
+    else if (message.type === 'offer') {
         if (!isInitiator && !isStarted) {
             maybeStart();
         }
@@ -90,7 +91,7 @@ socket.on('message', function (message) {
 
 ////////////////////////////////////////////////////
 
-var localVideo = document.querySelector('#localVideo');
+// var localVideo = document.querySelector('#localVideo');
 var remoteVideo = document.querySelector('#remoteVideo');
 
 navigator.mediaDevices.getUserMedia({
@@ -99,13 +100,13 @@ navigator.mediaDevices.getUserMedia({
 })
     .then(gotStream)
     .catch(function (e) {
-        alert('getUserMedia() error: ' + e.name);
+        alert('getUserMedia() error: ' + e.name + e.message + e.error);
     });
 
 function gotStream(stream) {
-    console.log('Adding local stream.');
-    localStream = stream;
-    localVideo.srcObject = stream;
+    console.log('CLIENT: Adding local stream.');
+    localStream = stream; // stream from client self
+    // localVideo.srcObject = stream;
     sendMessage('got user media');
     if (isInitiator) {
         maybeStart();
@@ -116,7 +117,7 @@ var constraints = {
     video: true
 };
 
-console.log('Getting user media with constraints', constraints);
+console.log('CLIENT: Getting user media with constraints', constraints);
 
 if (location.hostname !== 'localhost') {
     requestTurn(
@@ -127,7 +128,7 @@ if (location.hostname !== 'localhost') {
 function maybeStart() {
     console.log('>>>>>>> maybeStart() ', isStarted, localStream, isChannelReady);
     if (!isStarted && typeof localStream !== 'undefined' && isChannelReady) {
-        console.log('>>>>>> creating peer connection');
+        console.log('CLIENT: >>>>>> creating peer connection');
         createPeerConnection();
         pc.addStream(localStream);
         isStarted = true;
@@ -153,7 +154,7 @@ function createPeerConnection() {
         console.log('Created RTCPeerConnnection');
     } catch (e) {
         console.log('Failed to create PeerConnection, exception: ' + e.message);
-        alert('Cannot create RTCPeerConnection object.');
+        alert('Cannot create RTCPeerConnection object.' + e.message);
         return;
     }
 }

@@ -11,6 +11,11 @@ var ifaces = os.networkInterfaces();
 
 var userDB = { instructor: null, operator: null }
 
+
+
+const INSTRUCTOR_ROOM = 'INSTRUCTOR_ROOM';
+const OPERATOR_ROOM = 'OPERATOR_ROOM';
+
 var app = express()
     .use(express.static(path.join(__dirname, 'public')))
     .set('views', path.join(__dirname, 'views'))
@@ -23,7 +28,9 @@ var app = express()
 
 var io = socketIO.listen(app);
 
+
 io.sockets.on('connection', function (socket) {
+
     function log() {
         var array = ['Message from server:'];
         array.push.apply(array, arguments);
@@ -42,26 +49,36 @@ io.sockets.on('connection', function (socket) {
     socket.on('create or join', function (room) {
         log('Received request to create or join room ' + room);
 
-        var clientsInRoom = io.sockets.adapter.rooms[room];
-        var numClients = clientsInRoom ? Object.keys(clientsInRoom.sockets).length : 0;
-
-        log('Room ' + room + ' now has ' + numClients + ' client(s)');
-
-        if (numClients === 0) {
-            socket.join(room);
-            log('Client ID ' + socket.id + ' created room ' + room);
-            socket.emit('created', room, socket.id);
-            userDB.instructor = socket.id /** J: First to join becomes instructor */
-        } else if (numClients === 1) {
-            log('Client ID ' + socket.id + ' joined room ' + room);
-            io.sockets.in(room).emit('join', room);
-            socket.join(room);
-            socket.emit('joined', room, socket.id);
-            userDB.operator = socket.id /** J: Second to join becomes operator */
-            io.sockets.in(room).emit('ready');
-        } else { // max two clients
-            socket.emit('full', room);
+        /** */
+        var clientsInInsturctorRoom = io.sockets.adapter.rooms[INSTRUCTOR_ROOM];
+        var numClients_InstructorRoom = clientsInInsturctorRoom ? Object.keys(clientsInInsturctorRoom).length : 0;
+        if(numClients_InstructorRoom === 0 ) {
+            socket.join(INSTRUCTOR_ROOM);
+            io_instructor.join(INSTRUCTOR_ROOM);
+            socket.emit('created', INSTRUCTOR_ROOM, socket.id)
+            console.log("INSTRUCTOR_ROOM", clientsInInsturctorRoom);
         }
+        /** */
+        // var clientsInRoom = io.sockets.adapter.rooms[room];
+        // var numClients = clientsInRoom ? Object.keys(clientsInRoom.sockets).length : 0;
+
+        // log('Room ' + room + ' now has ' + numClients + ' client(s)');
+
+        // if (numClients === 0) {
+        //     socket.join(room);
+        //     log('Client ID ' + socket.id + ' created room ' + room);
+        //     socket.emit('created', room, socket.id);
+        //     userDB.instructor = socket.id /** J: First to join becomes instructor */
+        // } else if (numClients === 1) {
+        //     log('Client ID ' + socket.id + ' joined room ' + room);
+        //     io.sockets.in(room).emit('join', room);
+        //     socket.join(room);
+        //     socket.emit('joined', room, socket.id);
+        //     userDB.operator = socket.id /** J: Second to join becomes operator */
+        //     io.sockets.in(room).emit('ready');
+        // } else { // max two clients
+        //     socket.emit('full', room);
+        // }
     });
 
     socket.on('ipaddr', function () {

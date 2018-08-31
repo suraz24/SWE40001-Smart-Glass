@@ -12,11 +12,15 @@ const { RTCPeerConnection } = require('wrtc');
 async function main() {
 
      // Get stream from device
+
+     console.log("Firing Main");
+     
      var stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
-          video: {width: 120, height: 80 }
-          // video: true
+          video: true
      });
+
+     console.log("Stream?", stream)
 
      // Create peer connection with server
      console.log("Creating RTCPeerconnection");
@@ -41,7 +45,7 @@ async function main() {
      // Establish Connection
      try {
           // var ws = new WebSocket(WebSocket_URI);
-          var ws = new WebSocket("ws://192.168.43.104:5050");
+          var ws = new WebSocket("ws://localhost:1337");
           await onOpen(ws);
           // Key Press Event
           onKeypress(ws);

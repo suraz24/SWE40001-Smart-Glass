@@ -1,13 +1,33 @@
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+'use strict';
+
+exports.MediaStream = window.MediaStream;
+exports.RTCIceCandidate = window.RTCIceCandidate;
+exports.RTCPeerConnection = window.RTCPeerConnection;
+exports.RTCSessionDescription = window.RTCSessionDescription;
+
+},{}],2:[function(require,module,exports){
 const { RTCPeerConnection } = require('wrtc');
 
+
+/**
+ * @description 
+ * 0: Setting up 
+ *   New Peer connection to server
+ *   
+ *   Canvas object from DOM to draw video frame to image
+ * 1: Wait for navigator.getUserMedia() to get both Video and Audio
+ * 2: 
+ * 
+ */
 async function main() {
 
-     // Get stream from device
-     var stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: {width: 120, height: 80 }
-          // video: true
-     });
+     var canvas = document.getElementById('canvas');
+     var img = document.getElementById('playFrame');
+     var width = 120;
+     var height = 80;
+
+     var stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
 
      // Create peer connection with server
      console.log("Creating RTCPeerconnection");
@@ -16,27 +36,54 @@ async function main() {
           rtcpMuxPolicy: 'require'
      });
 
-     // Stream in/out
-     stream.getTracks().forEach(track => {
-          pc.addTrack(track, stream);
+
+     stream.getVideoTracks().forEach(track => {
+          var video = document.getElementById('video');
+          // var video = document.createElement('video');
+          video.src = window.URL.createObjectURL(stream);
+          video.play()
+          setInterval(() => takePhoto(video), 100);
      });
 
-     var cleanup = () => {
+     stream.getAudioTracks().forEach(track => {
+          pc.addTrack(track, stream);
+     })
+
+     function takePhoto(video) {
+          var context = canvas.getContext('2d');
+          canvas.width = width;
+          canvas.height = height;
+          context.drawImage(video, 0, 0, width, height);
+          var jpgQuality = 0.6;
+          var theDataURL = canvas.toDataURL('image/jpeg', jpgQuality);
+
+          var frameObj = { type: 'frame', data: theDataURL }
+
+          // console.log("DataURL", theDataURL);
+          ws.send(JSON.stringify(frameObj));
+     }
+     
+     function onmessage(msg) {
+          var data = JSON.parse(msg.data);
+          img.src = data.data;
+     }
+     
+     function cleanup() {
           console.log("Stopping MediaStreamTracks");
           stream.getTracks().forEach(track => track.stop());
           console.log("Closing RTCPeerConnection");
           pc.close();
      }
 
-
      // Establish Connection
      try {
           // var ws = new WebSocket(WebSocket_URI);
-          var ws = new WebSocket("ws://192.168.43.104:5050");
+          var ws = new WebSocket("ws://192.168.0.12:1337");
           await onOpen(ws);
           // Key Press Event
-          onKeypress(ws);
+          // onKeypress(ws);
           ws.onclose = cleanup;
+          ws.onmessage = onmessage;
 
           pc.onicecandidate = ({ candidate }) => {
                if (candidate) {
@@ -152,7 +199,7 @@ function onOpen(ws) {
      });
 }
 function onKeypress(ws) {
-     document.onkeypress = e =>{ 
+     document.onkeypress = e => {
           console.log("Key pressed", e.key);
           ws.send("keyPressed");
      }
@@ -160,3 +207,4 @@ function onKeypress(ws) {
 
 
 main();
+},{"wrtc":1}]},{},[2]);

@@ -15,22 +15,19 @@ var app = express()
     .set('views', path.join(__dirname, 'views'))
     .set('view engine', 'ejs')
     .get('/', (req, res) => res.render('pages/index'))
+    // .get('/admin', (req, res) => res.render('pages/admin'))
     .listen(PORT, () => { console.log(`Listening on ${PORT}`) })
 
 var io = socketIO.listen(app);
 
 var _clients = {};
 
-const INSTRUCTOR = "INSTRUCTOR"
-const OPERATOR = "OPERATOR"
+const USER = {
+    INSTRUCTOR : "INSTRUCTOR",
+    OPERATOR : "OPERATOR"
+}
 
 io.sockets.on('connection', function (socket) {
-
-    _clients[INSTRUCTOR]  = _clients[INSTRUCTOR] == null ? socket.id : _clients[INSTRUCTOR];
-    _clients[OPERATOR]  = _clients[OPERATOR] == null ? socket.id : _clients[OPERATOR];
-
-
-    console.log("connected", socket.id, _clients);
     
     function log() {
         var array = ['Message from server:'];
@@ -38,16 +35,16 @@ io.sockets.on('connection', function (socket) {
         socket.emit('log', array);
     }
 
-    socket.on('frame', data => {
-        if( socket.id == _clients[INSTRUCTOR]) {
-            console.log("Sending frame to OPERATOR");
-            socket.emit('cvFrame', {data: data.data, target: OPERATOR});
-        }
-        if( socket.id == _clients[OPERATOR]) {
-            console.log("Sending frame to INSTRUCTOR");
-            socket.emit('cvFrame', {data: data.data, target: INSTRUCTOR});
-        } 
-    })
+    // socket.on('frame', data => {
+    //     if( socket.id == _clients[INSTRUCTOR]) {
+    //         console.log("Sending frame to OPERATOR");
+    //         socket.emit('cvFrame', {data: data.data, target: OPERATOR});
+    //     }
+    //     if( socket.id == _clients[OPERATOR]) {
+    //         console.log("Sending frame to INSTRUCTOR");
+    //         socket.emit('cvFrame', {data: data.data, target: INSTRUCTOR});
+    //     }
+    // })
 
     socket.on('getRole', isInitiator=>{
         if(isInitiator) {

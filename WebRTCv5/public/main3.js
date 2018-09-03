@@ -1,24 +1,15 @@
 'use strict';
 
-var isChannelReady = false;
-var isInitiator = false;
-var isStarted = false;
-var pc;
-var remoteStream;
-var remoteAudioStream;
-var turnReady;
+var isChannelReady, isInitiator, isStarted, isConnected = false;
+var pc, remoteStream, remoteAudioStream;
 
 
 var localAudioStream;
-var localAudioTrack;
-var localVideoTrack;
 
-var isConnected = false;
 
 var room = 'foo';
 
-var socket = io.connect();
-
+var socket = io.connect({ reconnection: false });
 
 
 var remoteAudioPlayer = document.querySelector('#remoteAudio');
@@ -27,11 +18,15 @@ var localAudioPlayer = document.querySelector('#localAudio');
 var localVideoPlayer = document.querySelector('#localVideo');
 var canvas = document.querySelector('#canvas');
 
-var width = 150;
-var height = 84;
+var width = 180;
+var height = 135;
 
-var ROLE;
+var my_role;
+var ROLES = { INSTRUCTOR : "INSTRUCTOR", OPERATOR : "OPERATOR"}
 
+var dataChannel;
+
+/** Set up Media from device */
 navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream => {
 
     localAudioStream = stream
@@ -42,9 +37,10 @@ navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream =
         localVideoPlayer.style.display = 'none';
         localVideoPlayer.play();
 
-        setInterval(() => sendFrame(localVideoPlayer), 10);
-        
+        // Send Frames to server
+        setInterval(() => sendFrame(localVideoPlayer), 70);
 
+        // Notify server, maybe initiate peer connection
         sendMessage('got user media');
         if (isInitiator) {
             maybeStart();
@@ -52,83 +48,100 @@ navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream =
     })
 });
 
+/** */
 if (room !== '') {
     socket.emit('create or join', room);
     console.log('CLIENT: Attempted to create or  join room', room);
 }
 
+/**
+ * @description Client communication functions
+ */
+
+/** @param {*} video Send video frames to server */
 function sendFrame(video) {
-    if(isConnected) {
+    if (isConnected) {
         var context = canvas.getContext('2d');
         canvas.width = width;
         canvas.height = height;
         context.drawImage(video, 0, 0, width, height);
         var jpgQuality = 0.6;
         var theDataURL = canvas.toDataURL('image/jpeg', jpgQuality);
-    
-        var frameObj = { type: 'frame', data: theDataURL }
-    
+
+        var frameObj = { 
+            type: 'frame', 
+            from: my_role,
+            data: theDataURL }
+
         socket.emit('frame', frameObj)
     }
 }
 
-function handleRemoteStreamAdded(event) {
-    console.log('Remote stream recieved;', event);
-    remoteAudioStream = event.streams[0];
-    remoteAudioPlayer.srcObject = remoteAudioStream;
-    isConnected = true;
-    console.log('Remote stream added.');
+/**
+ * @description send a message to server
+ * @param {string} message 
+ */
+function sendMessage(message) {
+    console.log('CLIENT: Client sending message: ', message);
+    socket.emit('message', message);
 }
 
-function handleRemoteStreamRemoved(event) {
-    console.log('Remote stream removed. Event: ', event);
+/**
+ * @description send the role to the other peer if connected
+ */
+document.onkeypress = (e) => {
+    console.log("Key presssed; Changing Role");
+    EmitChangeRole();
+}
+function DoChangeRole() {
+    my_role = my_role == ROLES.INSTRUCTOR ? ROLES.OPERATOR : ROLES.INSTRUCTOR;
+    document.querySelector('#role').innerHTML = my_role;
+    console.log("my role is now", my_role);
+}
+function EmitChangeRole() {
+    DoChangeRole();
+    DataChannelSend(JSON.stringify({type: 'roleChange'}))
 }
 
-function createPeerConnection() {
-    try {
-        pc = new RTCPeerConnection(null);
-        pc.onicecandidate = handleIceCandidate;
-        pc.ontrack = handleRemoteStreamAdded;
-        // pc.onremovestream = handleRemoteStreamRemoved;
-        console.log('Created RTCPeerConnnection');
-    } catch (e) {
-        console.log('Failed to create PeerConnection, exception: ' + e.message);
-        alert('Cannot create RTCPeerConnection object.' + e.message);
-        return;
+/**
+ * @description Datachannel Functions for handeling data from data channel
+ * @param {*} message 
+ */
+function OnDataChannel(dc) {
+    /**
+     * Upon establishing datachannel, set global data channel to this channel
+     */
+    var channel = dc.channel;
+    console.log("Recieved data channel; Monitoring open events");
+    channel.onopen = (e) =>{
+        console.log("Channel Opened; Sending initial role offer")
+        
+        my_role = isInitiator ? ROLES.INSTRUCTOR : ROLES.OPERATOR;
+
+        DataChannelSend(JSON.stringify({ type: 'initialRoleOffer', value: my_role }))
+        console.log("Initial role offer sent");
     }
+    channel.onmessage = OnDataChannelMessage
+}
+function DataChannelSend(message) {
+    dataChannel.send(message);
+}
+function OnDataChannelMessage(message) {
+    var message = JSON.parse(message.data);
+    if(message.type == 'roleChange') { DoChangeRole(); }
 }
 
-function maybeStart() {
-    console.log('>>>>>>> maybeStart() ', isStarted, localAudioStream, isChannelReady);
-    if (!isStarted && typeof localAudioStream !== 'undefined' && isChannelReady) {
-        console.log('CLIENT: >>>>>> creating peer connection');
-        createPeerConnection();
-        pc.addStream(localAudioStream);
-        console.log("Added audio stream to peer");
-        isStarted = true;
-        console.log('isInitiator', isInitiator);
-        if (isInitiator) {
-            doCall();
-        }
-        doElection(isInitiator);
-    }
-}
 
-function doElection(isInitiator) {
-    socket.emit('getRole', isInitiator);
-}
+/** 
+ * @description A list of functions to handle socket events emitted by server
+ */
 
-socket.on('getRole', data=>{
-    console.log("I am", data);
-    ROLE = data
-    document.getElementById('role').innerHTML = ROLE;
-})
-
-socket.on('cvFrame', data=>{
-    if(data.target == ROLE) {
-        console.log(data);
-    }
-})
+// socket.on('cvFrame', data => {
+//     console.log("recieved cvFrame", data);
+//     if (data.target == ROLE) {
+//         console.log(data);
+//     }
+// })
 
 socket.on('created', function (room) {
     console.log('CLIENT: Created room ' + room);
@@ -154,12 +167,6 @@ socket.on('log', function (array) {
     console.log.apply(console, array);
 });
 
-function sendMessage(message) {
-    console.log('CLIENT: Client sending message: ', message);
-    socket.emit('message', message);
-}
-
-// This client receives a message
 socket.on('message', function (message) {
     console.log('CLIENT: Client received message:', message);
     if (message === 'got user media') {
@@ -185,17 +192,52 @@ socket.on('message', function (message) {
 });
 
 
+/** 
+ * @description A list of functions for establishing peer connection 
+ */
+
+function OnRemoteStream(event) {
+    console.log('Remote stream recieved;', event);
+    remoteAudioStream = event.streams[0];
+    remoteAudioPlayer.srcObject = remoteAudioStream;
+    isConnected = true;
+    console.log('Remote stream added.');
+}
+
+function maybeStart() {
+    console.log('>>>>>>> maybeStart() ', isStarted, localAudioStream, isChannelReady);
+    if (!isStarted && typeof localAudioStream !== 'undefined' && isChannelReady) {
+        console.log('CLIENT: >>>>>> creating peer connection');
+        createPeerConnection();
+        pc.addStream(localAudioStream);
+        console.log("Added audio stream to peer");
+        isStarted = true;
+        console.log('isInitiator', isInitiator);
+        if (isInitiator) {
+            doCall();
+        }
+    }
+}
+
+function createPeerConnection() {
+    try {
+        pc = new RTCPeerConnection(null);
+        pc.onicecandidate = OnIceCandidate;
+        pc.ontrack = OnRemoteStream
+        dataChannel =  pc.createDataChannel('roles');
+        pc.ondatachannel = OnDataChannel
 
 
-window.onbeforeunload = function () {
-    sendMessage('bye');
-    socket.close();
-};
+        console.log('Created RTCPeerConnnection');
+    } catch (e) {
+        console.log('Failed to create PeerConnection, exception: ' + e.message);
+        alert('Cannot create RTCPeerConnection object.' + e.message);
+        return;
+    }
+}
 
 
-
-
-function handleIceCandidate(event) {
+function OnIceCandidate(event) {
     console.log('icecandidate event: ', event);
     if (event.candidate) {
         sendMessage({
@@ -236,7 +278,6 @@ function onCreateSessionDescriptionError(error) {
     trace('Failed to create session description: ' + error.toString());
 }
 
-
 function hangup() {
     console.log('Hanging up.');
     stop();
@@ -254,3 +295,13 @@ function stop() {
     pc.close();
     pc = null;
 }
+
+/**
+ * @description call when user close the browser window
+ */
+
+window.onbeforeunload = function () {
+    sendMessage('bye');
+    socket.close();
+};
+

@@ -18,12 +18,15 @@ var app = express()
 var io = socketIO.listen(app);
 
 const USER = {
-    INSTRUCTOR : "INSTRUCTOR",
-    OPERATOR : "OPERATOR"
+    INSTRUCTOR: "INSTRUCTOR",
+    OPERATOR: "OPERATOR"
 }
-var isReady = false
 
-var current_iFrame, current_oFrame, last_iFrame, last_oFrame;
+var isProcessing, iFrame_isCaptured, oFrame_isCaptured = false
+
+var iFrame, oFrame = null;
+
+var n = 0, k = 0;
 
 io.sockets.on('connection', function (socket) {
 
@@ -34,19 +37,44 @@ io.sockets.on('connection', function (socket) {
     }
 
     socket.on('frame', data => {
-        /**
-         * Get frames from client
-         * 
-         */
-        if(data.from == USER.INSTRUCTOR) {
-            current_iFrame = data.data
-        } else if( data.from == USER.OPERATOR) {
-            current_oFrame = data.data
-        }
-        if(current_oFrame && current_iFrame) {
-            ProcessFrames(current_iFrame, current_oFrame).then(processedFrame=>{
-                socket.emit("cvFrame", processedFrame)
-            })
+        n++;
+        console.log("Frames Recieved:::", n);
+        if (!isProcessing) {
+            /**
+             * Capture frames from clients
+             * Switch operator order when clients switch roles
+             */
+            if (data.from == USER.INSTRUCTOR && !iFrame_isCaptured) {
+                iFrame = data.data
+                iFrame_isCaptured = true
+            }
+            if (data.from == USER.OPERATOR && !oFrame_isCaptured) {
+                oFrame = data.data
+                oFrame_isCaptured = true
+            }
+
+            /**
+             * When both frames have been captured, processing begins
+             */
+            if (iFrame !== null && oFrame !== null && oFrame !== undefined && iFrame!==undefined) {
+                k++;
+                console.log("Frames Captured:::", k)
+                /**
+                 * 
+                 * @function ProcessFrames() from ./gesture.js
+                 * Process frames, then emit to both clients
+                 * Set captured frames as null and signal processing has ended
+                 */
+                isProcessing = true
+
+                socket.emit("cvFrame", { data: ProcessFrames(iFrame, oFrame) })
+
+                iFrame, oFrame = null
+                iFrame_isCaptured, oFrame_isCaptured = false;
+                isProcessing = false
+
+            }
+
         }
 
     })

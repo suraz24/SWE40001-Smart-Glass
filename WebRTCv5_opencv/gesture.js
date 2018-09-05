@@ -1,19 +1,26 @@
 var cv = require('opencv4nodejs');
-
+var {Mat} = require('opencv4nodejs');
+var n = 0;
 module.exports = {
-     ProcessFrames: function (instructorFrame, operatorFrame) {
+     ProcessFrames: function (iFrame, oFrame) {
+          console.log("Processing Begin", n)
+          iFrame = base64toMat(iFrame);
+          oFrame = base64toMat(oFrame);
           
-          return new Promise(resolve=>{
+          // Process Image Matrix 
+          var processedMat = grabCut(iFrame, oFrame);
+          console.log("Processing End");
+          
+          // Convert Mat to base64
+          // var outBase64 = "data:image/jpeg;base64," + cv.imencode('.jpeg', processedMat).toString('base64');
+          n++;
+          return  "data:image/jpeg;base64," + cv.imencode('.jpeg', processedMat).toString('base64');
+          
+          // return new Promise(resolve=>{
+          //      resolve(outBase64)
 
-               var oFrame = base64toMat(operatorFrame);
-               var iFrame = base64toMat(instructorFrame);
+          // })
 
-               var processedMat = grabCut(iFrame, oFrame);
-
-               resolve(cv.imencode('.jpeg', processedMat).toString('base64'))
-          })
-
-          // return cv.imencode('.jpeg', processedMat).toString('base64');
      }
 }
 
@@ -30,8 +37,10 @@ const skinColorLower = hue => new cv.Vec(hue, 0.1 * 255, 0.05 * 255);
  * @returns {Mat} a Mat
  */
 function base64toMat(base64) {
-     return cv.imdecode(new Buffer(base64.split(',')[1], 'base64'));
+     var split = base64.split(',')[1]
+     return cv.imdecode(Buffer.from(split, 'base64'));
 }
+
 
 /**
  * Extract hands from handFrame
@@ -41,8 +50,10 @@ function base64toMat(base64) {
  * @returns a Mat, combined with hands from handFrame and backgroundFrame
  */
 function grabCut(handFrame, backgroundFrame) {
+
      let src = handFrame;
      let background = backgroundFrame;
+     // let background = Mat(handFrame.rows, handFrame.cols, handFrame.type);
      src = src.cvtColor(cv.COLOR_RGBA2RGB);
      background = background.cvtColor(cv.COLOR_RGBA2RGB);
      let ksrc = src;
@@ -56,7 +67,7 @@ function grabCut(handFrame, backgroundFrame) {
                }
           }
      }
-     return cv.imencode('.jpg', ksrc).toString('base64');
+     return ksrc
 }
 
 function makeHandMask(img) {

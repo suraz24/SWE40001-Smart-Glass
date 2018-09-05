@@ -17,9 +17,10 @@ var remoteVideoPlayer = document.querySelector('#remoteVideo');
 var localAudioPlayer = document.querySelector('#localAudio');
 var localVideoPlayer = document.querySelector('#localVideo');
 var canvas = document.querySelector('#canvas');
+var cvFrame = document.querySelector('#cvFrame');
 
-var width = 180;
-var height = 135;
+var width = 120;
+var height = 90;
 
 var my_role;
 var ROLES = { INSTRUCTOR: "INSTRUCTOR", OPERATOR: "OPERATOR" }
@@ -38,7 +39,7 @@ navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream =
         localVideoPlayer.play();
 
         // Send Frames to server
-        setInterval(() => sendFrame(localVideoPlayer), 70);
+        setInterval(() => sendFrame(localVideoPlayer), 250);
 
         // Notify server, maybe initiate peer connection
         sendMessage('got user media');
@@ -138,7 +139,8 @@ function OnDataChannelMessage(message) {
  */
 
 socket.on('cvFrame', data => {
-    console.log("recieved cvFrame", data);
+    console.log("cvFrame");
+    cvFrame.src = data.data
 })
 
 socket.on('created', function (room) {

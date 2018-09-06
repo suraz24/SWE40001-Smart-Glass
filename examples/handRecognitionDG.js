@@ -11,7 +11,7 @@ const makeHandMask = (img) => {
   const rangeMask = imgHLS.inRange(skinColorLower(0), skinColorUpper(15));
 
   // remove noise
-  const blurred = rangeMask.blur(new cv.Size(10, 10));
+  const blurred = rangeMask.blur(new cv.Size(16, 16));
   const thresholded = blurred.threshold(200, 255, cv.THRESH_BINARY);
 
   return thresholded;

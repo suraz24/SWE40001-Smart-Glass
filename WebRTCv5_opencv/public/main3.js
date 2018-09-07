@@ -27,6 +27,11 @@ var ROLES = { INSTRUCTOR: "INSTRUCTOR", OPERATOR: "OPERATOR" }
 
 var dataChannel;
 
+var STREAM_MODE = {
+    AS_OPERATOR: "AS OPERATOR",
+    AS_INSTRUCTOR: "AS INSTRUCTOR"
+}
+
 /** Set up Media from device */
 navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream => {
 
@@ -35,7 +40,8 @@ navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream =
     navigator.mediaDevices.getUserMedia({ audio: false, video: true }).then(stream => {
 
         localVideoPlayer.src = window.URL.createObjectURL(stream)
-        localVideoPlayer.style.display = 'none';
+        // localVideoPlayer.src = stream
+        // localVideoPlayer.style.display = 'none';
         localVideoPlayer.play();
 
         // Send Frames to server
@@ -55,6 +61,7 @@ if (room !== '') {
     console.log('CLIENT: Attempted to create or  join room', room);
 }
 
+
 /**
  * @description Client communication functions
  */
@@ -69,13 +76,10 @@ function sendFrame(video) {
         var jpgQuality = 0.6;
         var theDataURL = canvas.toDataURL('image/jpeg', jpgQuality);
 
-        var frameObj = {
-            type: 'frame',
-            from: my_role,
-            data: theDataURL
-        }
+        var frameObj = { type: 'frame', from: my_role, data: theDataURL }
 
         socket.emit('frame', frameObj)
+
     }
 }
 
@@ -105,42 +109,57 @@ function EmitChangeRole() {
     DataChannelSend(JSON.stringify({ type: 'roleChange' }))
 }
 
-/**
- * @description Datachannel Functions for handeling data from data channel
- * @param {*} message 
- */
-function OnDataChannel(dc) {
-    /**
-     * Upon establishing datachannel, set global data channel to this channel
-     */
-    var channel = dc.channel;
-    console.log("Recieved data channel; Monitoring open events");
-    channel.onopen = (e) => {
-        console.log("Channel Opened; Sending initial role offer")
+// /**
+//  * @description Datachannel Functions for handeling data from data channel
+//  * @param {*} message 
+//  */
+// function OnDataChannel(dc) {
+//     /**
+//      * Upon establishing datachannel, set global data channel to this channel
+//      */
+//     var channel = dc.channel;
+//     console.log("Recieved data channel; Monitoring open events");
+//     channel.onopen = (e) => {
+//         console.log("Channel Opened; Sending initial role offer")
 
-        my_role = isInitiator ? ROLES.INSTRUCTOR : ROLES.OPERATOR;
+//         my_role = isInitiator ? ROLES.INSTRUCTOR : ROLES.OPERATOR;
 
-        DataChannelSend(JSON.stringify({ type: 'initialRoleOffer', value: my_role }))
-        console.log("Initial role offer sent");
-    }
-    channel.onmessage = OnDataChannelMessage
-}
-function DataChannelSend(message) {
-    dataChannel.send(message);
-}
-function OnDataChannelMessage(message) {
-    var message = JSON.parse(message.data);
-    if (message.type == 'roleChange') { DoChangeRole(); }
-}
+//         document.querySelector('#role').innerHTML = my_role;
+
+//         DataChannelSend(JSON.stringify({ type: 'initialRoleOffer', value: my_role }))
+//         console.log("Initial role offer sent");
+//     }
+//     channel.onmessage = OnDataChannelMessage
+// }
+// function DataChannelSend(message) {
+//     dataChannel.send(message);
+// }
+// function OnDataChannelMessage(message) {
+//     var message = JSON.parse(message.data);
+//     if (message.type == 'roleChange') { DoChangeRole(); }
+// }
 
 
 /** 
  * @description A list of functions to handle socket events emitted by server
  */
 
+
+/**
+ * On Recieving processed frames from server
+ */
+var prev_bgFrame, prev_fgFrame = null;
 socket.on('cvFrame', data => {
-    console.log("cvFrame");
-    cvFrame.src = data.data
+    console.log("cvFrame", data.type);
+    cvFrame.src = data.data;
+    if (data.type == 'bgFrame') {
+        prev_bgFrame = data.data
+    } else if (data.type == 'fgFrame') {
+        prev_fgFrame = data.data
+    }
+
+    document.querySelector('#superFrame').style.background = "url(" + prev_fgFrame  + ")," + "url(" + prev_bgFrame + ")";
+
 })
 
 socket.on('created', function (room) {
@@ -200,8 +219,13 @@ function OnRemoteStream(event) {
     console.log('Remote stream recieved;', event);
     remoteAudioStream = event.streams[0];
     remoteAudioPlayer.srcObject = remoteAudioStream;
+
+    // Connection Established
     isConnected = true;
-    console.log('Remote stream added.');
+
+    my_role = isInitiator ? ROLES.INSTRUCTOR : ROLES.OPERATOR;
+    document.querySelector('#role').innerHTML = my_role;
+
 }
 
 function maybeStart() {
@@ -224,9 +248,8 @@ function createPeerConnection() {
         pc = new RTCPeerConnection(null);
         pc.onicecandidate = OnIceCandidate;
         pc.ontrack = OnRemoteStream
-        dataChannel = pc.createDataChannel('roles');
-        pc.ondatachannel = OnDataChannel
-
+        // dataChannel = pc.createDataChannel('roles');
+        // pc.ondatachannel = OnDataChannel
 
         console.log('Created RTCPeerConnnection');
     } catch (e) {
@@ -302,6 +325,7 @@ function stop() {
 
 window.onbeforeunload = function () {
     sendMessage('bye');
+    isConnected = false;
     socket.close();
 };
 

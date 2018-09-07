@@ -5,7 +5,7 @@ const path = require('path');
 const PORT = process.env.PORT || 5000
 var socketIO = require('socket.io');
 
-var { ProcessFrames } = require('./gesture');
+var { ProcessFrames, ProcessHands } = require('./gesture');
 
 var app = express()
     .use(express.static(path.join(__dirname, 'public')))
@@ -17,77 +17,80 @@ var app = express()
 
 var io = socketIO.listen(app);
 
-const USER = {
-    INSTRUCTOR: "INSTRUCTOR",
-    OPERATOR: "OPERATOR"
-}
+const USER = { INSTRUCTOR: "INSTRUCTOR", OPERATOR: "OPERATOR" }
 
-var isProcessing, iFrame_isCaptured, oFrame_isCaptured = false
+var isProcessing = false
+var iFrame_isCaptured = false;
 
-var iFrame, oFrame = null;
 
 var n = 0, k = 0;
 
 io.sockets.on('connection', function (socket) {
 
+    console.log("conn");
     function log() {
         var array = ['Message from server:'];
         array.push.apply(array, arguments);
         socket.emit('log', array);
     }
 
+
+    /**
+     * @description Receiving Frames from clients, process according to frame origin/client type
+     * */
     socket.on('frame', data => {
+
         n++;
         console.log("Frames Recieved:::", n);
-        if (!isProcessing) {
-            /**
-             * Capture frames from clients
-             * Switch operator order when clients switch roles
-             */
-            if (data.from == USER.INSTRUCTOR && !iFrame_isCaptured) {
-                iFrame = data.data
-                iFrame_isCaptured = true
-            }
-            if (data.from == USER.OPERATOR && !oFrame_isCaptured) {
-                oFrame = data.data
-                oFrame_isCaptured = true
-            }
 
-            /**
-             * When both frames have been captured, processing begins
-             */
-            if (iFrame !== null && oFrame !== null && oFrame !== undefined && iFrame!==undefined) {
-                k++;
-                console.log("Frames Captured:::", k)
+        /***********************************************
+         *  Insturctor's frame
+         *********************************************** */
+        if (data.from == USER.INSTRUCTOR) {
+            /** Process instructor's frames */
+            if (iFrame_isCaptured && isProcessing) return;
+
+            k++;
+            console.log("Frames Captured:::", k);
+
+            /** Capture Frame, stop further capture until processing is done */
+            var iFrame = data.data
+            iFrame_isCaptured = true
+
+            if (iFrame !== undefined) {
                 /**
-                 * 
-                 * @function ProcessFrames() from ./gesture.js
-                 * Process frames, then emit to both clients
-                 * Set captured frames as null and signal processing has ended
+                 * Process Frame, emit to all clients
                  */
-                isProcessing = true
+                var processedFrame = ProcessHands(iFrame);
+                io.sockets.emit('cvFrame', { type:'fgFrame', data: processedFrame });
 
-                socket.emit("cvFrame", { data: ProcessFrames(iFrame, oFrame) })
-
-                iFrame, oFrame = null
-                iFrame_isCaptured, oFrame_isCaptured = false;
-                isProcessing = false
-
+                /**
+                 * Reset Conditions
+                 */
+                iFrame_isCaptured = false;
+                isProcessing = false;
             }
-
         }
-
+        /***********************************************
+         *  Operator's frame
+         *********************************************** */
+        else if (data.from == USER.OPERATOR) {
+            /** 
+             * No need to process operator's frames, relay frame back to all clients
+             */
+            io.sockets.emit('cvFrame', { type:'bgFrame', data: data.data });
+        }
     })
 
-    socket.on('getRole', isInitiator => {
-        if (isInitiator) {
-            _clients[socket.id] = INSTRUCTOR;
-            socket.emit('getRole', INSTRUCTOR);
-        } else {
-            _clients[socket.id] = OPERATOR;
-            socket.emit('getRole', OPERATOR);
-        }
-    });
+    // socket.on('getRole', isInitiator => {
+    //     if (isInitiator) {
+    //         _clients[socket.id] = INSTRUCTOR;
+    //         socket.emit('getRole', INSTRUCTOR);
+    //     } else {
+    //         _clients[socket.id] = OPERATOR;
+    //         socket.emit('getRole', OPERATOR);
+    //     }
+    // });
 
     socket.on('message', function (message) {
         log('Client said: ', message);

@@ -10,15 +10,24 @@
 <body>
 
   <h1 id="role">SGBRGS</h1>
-
-  <video id="localVideo"></video>
-  <canvas id="canvas"></canvas>
-
-  <img id="cvFrame">
   
-  <!-- <audio id="localAudio" autoplay controls></audio> -->
-  <!-- <video id="remoteVideo" autoplay></video> -->
-  <audio id="remoteAudio" autoplay controls></audio>
+  <div style="display: none;">
+    <span>cvFrame</span>
+    <img id="cvFrame"> 
+    
+    <span>Canvas(Local)</span>
+    <canvas id="canvas"></canvas>
+    
+    <span>Video(Local)</span>
+    <video id="localVideo"></video>
+
+    <audio id="remoteAudio" autoplay></audio>
+  </div>
+
+  <!-- <span>superframe</span> -->
+  <div id="superFrame" style="background-blend-mode: luminosity; width: 100px; height:100px">
+  </div>
+  
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>

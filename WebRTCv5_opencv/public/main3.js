@@ -45,8 +45,8 @@ navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream =
         localVideoPlayer.play();
 
         // Send Frames to server
-        setInterval(() => sendFrame(localVideoPlayer), 250);
-
+        setInterval(() => sendFrame(localVideoPlayer), 200);
+        
         // Notify server, maybe initiate peer connection
         sendMessage('got user media');
         if (isInitiator) {
@@ -151,15 +151,14 @@ function EmitChangeRole() {
 var prev_bgFrame, prev_fgFrame = null;
 socket.on('cvFrame', data => {
     console.log("cvFrame", data.type);
-    cvFrame.src = data.data;
+    // cvFrame.src = data.data;
     if (data.type == 'bgFrame') {
-        prev_bgFrame = data.data
+        document.querySelector('#bgFrame').src = data.data
     } else if (data.type == 'fgFrame') {
-        prev_fgFrame = data.data
+        document.querySelector('#fgFrame').src = data.data
     }
 
-    document.querySelector('#superFrame').style.background = "url(" + prev_fgFrame  + ")," + "url(" + prev_bgFrame + ")";
-
+    // document.querySelector('#superFrame').style.background = "url(" + prev_fgFrame  + ")," + "url(" + prev_bgFrame + ")";
 })
 
 socket.on('created', function (room) {

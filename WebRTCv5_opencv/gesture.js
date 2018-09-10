@@ -1,5 +1,6 @@
 var cv = require('opencv4nodejs');
 var { Mat } = require('opencv4nodejs');
+var GPU  = require('gpu.js');
 var n = 0;
 
 
@@ -50,7 +51,8 @@ module.exports = {
 // segmenting by skin color (has to be adjusted)
 const skinColorUpper = hue => new cv.Vec(hue, 0.8 * 255, 0.6 * 255);
 const skinColorLower = hue => new cv.Vec(hue, 0.1 * 255, 0.05 * 255);
-
+const transparentPixel = new cv.Vec4(0,0,0,0);
+// const transparentPixel = new cv.Vec4(0,0,0,0);
 
 /**
  * Extract hands from frame using mask
@@ -59,15 +61,13 @@ const skinColorLower = hue => new cv.Vec(hue, 0.1 * 255, 0.05 * 255);
  */
 function grabHand(handFrame) {
      let src = handFrame;
-     // src = src.cvtColor(cv.COLOR_RGBA2RGB);
      src = src.cvtColor(cv.COLOR_RGB2RGBA);
      const handMask = makeHandMask(src);
 
      for (let i = 0; i < handMask.rows; i++) {
           for (let j = 0; j < handMask.cols; j++) {
                if (handMask.at(i, j) == 0) {
-                    let pixel = new cv.Vec4(0,0,0,0);
-                    src.set(i, j, pixel);
+                    src.set(i, j, transparentPixel);
                }
           }
      }
@@ -95,7 +95,7 @@ function grabCut(handFrame, backgroundFrame) {
                if (handMask.at(i, j) == 0) {
                     let pixel = new cv.Vec(background.at(i, j).at(0), background.at(i, j).at(1), background.at(i, j).at(2));
                     ksrc.set(i, j, pixel);
-               }
+               } 
           }
      }
      return ksrc

@@ -23,7 +23,7 @@ var isProcessing = false
 var iFrame_isCaptured = false;
 
 
-var n = 0, k = 0;
+var bg_count, fg_count, fg_processed_count = 0;
 
 io.sockets.on('connection', function (socket) {
 
@@ -34,8 +34,51 @@ io.sockets.on('connection', function (socket) {
         socket.emit('log', array);
     }
 
+    /**
+     * Recieved bgFrame, from operator
+     * Emit to all clients without processing
+     */
+    socket.on('bgFrame', data=>{
+        bg_count++;
+        console.log("bgFrame recieved:", bg_count, "\n");
+
+        io.sockets.emit('bgFrame', {data: data.data });
+    })
+    
+    /**
+     * Recieved fgFrame, from instructor
+     * Capture frame to @param iFrame, stop capturing while processing
+     */
+    socket.on('fgFrame', data=>{
+        
+        fg_count++;
+        console.log("fgFrame recieved:", fg_count);
+        
+        /*** Stop capturing if in progress */
+        if (iFrame_isCaptured && isProcessing && !data.data) return;
+
+        /*** Capture Frame, stop further capture until processing is done */
+        var iFrame = data.data
+        iFrame_isCaptured = true
+
+        /*** Process Frame */
+        var processedFrame = ProcessHands(iFrame);
+        
+        fg_processed_count++;
+        console.log("fgFrame processed:", fg_processed_count, "\n");
+
+        /*** Emit processed frame to all clients */
+        io.sockets.emit('fgFrame', {data: processedFrame });
+
+        /*** Reset Conditions */
+        iFrame_isCaptured = false;
+        isProcessing = false;
+        
+    })
+
 
     /**
+     * @deprecated 'frame' event deprecated, use 'bgFrame' and 'fgFrame' instead;
      * @description Receiving Frames from clients, process according to frame origin/client type
      * */
     socket.on('frame', data => {
@@ -82,15 +125,6 @@ io.sockets.on('connection', function (socket) {
         }
     })
 
-    // socket.on('getRole', isInitiator => {
-    //     if (isInitiator) {
-    //         _clients[socket.id] = INSTRUCTOR;
-    //         socket.emit('getRole', INSTRUCTOR);
-    //     } else {
-    //         _clients[socket.id] = OPERATOR;
-    //         socket.emit('getRole', OPERATOR);
-    //     }
-    // });
 
     socket.on('message', function (message) {
         log('Client said: ', message);

@@ -194,23 +194,7 @@ grabFrames('../data/example5.mp4', delay, (frame) => {
     );
   });
 
-  // display detection result
-  const numFingersUp = verticesWithValidAngle.length;
-  result.drawRectangle(
-    new cv.Point(10, 10),
-    new cv.Point(70, 70),
-    { color: green, thickness: 2 }
-  );
-
-  const fontScale = 2;
-  result.putText(
-    String(numFingersUp),
-    new cv.Point(20, 60),
-    cv.FONT_ITALIC,
-    fontScale,
-    { color: green, thickness: 2 }
-  );
-
+  
   const { rows, cols } = result;
   const sideBySide = new cv.Mat(rows, cols * 2, cv.CV_8UC3);
   result.copyTo(sideBySide.getRegion(new cv.Rect(0, 0, cols, rows)));

@@ -25,15 +25,6 @@ const getHandContour = (handMask) => {
   return contours.sort((c0, c1) => c1.area - c0.area)[0];
 };
 
-// returns distance of two points
-const ptDist = (pt1, pt2) => pt1.sub(pt2).norm();
-
-// returns center of all points
-const getCenterPt = pts => pts.reduce(
-    (sum, pt) => sum.add(pt),
-    new cv.Point(0, 0)
-  ).div(pts.length);
-
 // get the polygon from a contours hull such that there
 // will be only a single hull point for a local neighborhood
 const getRoughHull = (contour, maxDist) => {

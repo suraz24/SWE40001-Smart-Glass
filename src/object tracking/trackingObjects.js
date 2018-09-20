@@ -136,8 +136,6 @@ const filterVerticesByAngle = (vertices, maxAngleDeg) =>
   });
 
 const blue = new cv.Vec(255, 0, 0);
-const green = new cv.Vec(0, 255, 0);
-const red = new cv.Vec(0, 0, 255);
 
 // main
 const delay = 20;

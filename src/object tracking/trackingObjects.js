@@ -88,33 +88,7 @@ console.log(ypt);
 return [xpt,ypt]    // returns an array with the x and y cordinates 
   };
 
-const getHullDefectVertices = (handContour, hullIndices) => {
-  const defects = handContour.convexityDefects(hullIndices);
-  const handContourPoints = handContour.getPoints();
 
-  // get neighbor defect points of each hull point
-  const hullPointDefectNeighbors = new Map(hullIndices.map(idx => [idx, []]));
-  defects.forEach((defect) => {
-    const startPointIdx = defect.at(0);
-    const endPointIdx = defect.at(1);
-    const defectPointIdx = defect.at(2);
-    hullPointDefectNeighbors.get(startPointIdx).push(defectPointIdx);
-    hullPointDefectNeighbors.get(endPointIdx).push(defectPointIdx);
-  });
-
-  return Array.from(hullPointDefectNeighbors.keys())
-    // only consider hull points that have 2 neighbor defects
-    .filter(hullIndex => hullPointDefectNeighbors.get(hullIndex).length > 1)
-    // return vertex points
-    .map((hullIndex) => {
-      const defectNeighborsIdx = hullPointDefectNeighbors.get(hullIndex);
-      return ({
-        pt: handContourPoints[hullIndex],
-        d1: handContourPoints[defectNeighborsIdx[0]],
-        d2: handContourPoints[defectNeighborsIdx[1]]
-      });
-    });
-};
 
 const blue = new cv.Vec(255, 0, 0);
 
@@ -129,16 +103,16 @@ grabFrames('../data/example5.mp4', delay, (frame) => {
   if (!handContour) {
     return;
   }
-//console.log("H: ", resizedImg.at(i,j).at(0), "S: ", resizedImg.at(i,j).at(1), "V: ", resizedImg.at(i,j).at(2));
+  
   const maxPointDist = 25;
-  const hullIndices = getRoughHull(handContour, maxPointDist);
+
   
   const objectCenter = getObjectCenter(handContour);
 
 
   // get defect points of hull to contour and return vertices
   // of each hull point to its defect points
-  const vertices = getHullDefectVertices(handContour, hullIndices);
+
 
   // fingertip points are those which have a sharp angle to its defect points
   const maxAngleDeg = 60;
@@ -151,29 +125,23 @@ grabFrames('../data/example5.mp4', delay, (frame) => {
     blue,
     { thickness: 2 }
   );
+  
+  // display detection result
+  const numFingersUp = verticesWithValidAngle.length;
+  result.drawRectangle(
+    new cv.Point(10, 10),
+    new cv.Point(70, 70),
+    { color: green, thickness: 2 }
+  );
 
-  // draw points and vertices
-  verticesWithValidAngle.forEach((v) => {
-    resizedImg.drawLine(
-      v.pt,
-      v.d1,
-      { color: green, thickness: 2 }
-    );
-    resizedImg.drawLine(
-      v.pt,
-      v.d2,
-      { color: green, thickness: 2 }
-    );
-    resizedImg.drawEllipse(
-      new cv.RotatedRect(v.pt, new cv.Size(20, 20), 0),
-      { color: red, thickness: 2 }
-    );
-    result.drawEllipse(
-      new cv.RotatedRect(v.pt, new cv.Size(20, 20), 0),
-      { color: red, thickness: 2 }
-    );
-  });
-
+  const fontScale = 2;
+  result.putText(
+    String(numFingersUp),
+    new cv.Point(20, 60),
+    cv.FONT_ITALIC,
+    fontScale,
+    { color: green, thickness: 2 }
+  );
   
   const { rows, cols } = result;
   const sideBySide = new cv.Mat(rows, cols * 2, cv.CV_8UC3);

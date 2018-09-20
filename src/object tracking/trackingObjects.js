@@ -25,15 +25,6 @@ const getHandContour = (handMask) => {
   return contours.sort((c0, c1) => c1.area - c0.area)[0];
 };
 
-// returns distance of two points
-const ptDist = (pt1, pt2) => pt1.sub(pt2).norm();
-
-// returns center of all points
-const getCenterPt = pts => pts.reduce(
-    (sum, pt) => sum.add(pt),
-    new cv.Point(0, 0)
-  ).div(pts.length);
-
 // get the polygon from a contours hull such that there
 // will be only a single hull point for a local neighborhood
 const getRoughHull = (contour, maxDist) => {
@@ -99,19 +90,8 @@ return [xpt,ypt]    // returns an array with the x and y cordinates
 
 
 
-const filterVerticesByAngle = (vertices, maxAngleDeg) =>
-  vertices.filter((v) => {
-    const sq = x => x * x;
-    const a = v.d1.sub(v.d2).norm();
-    const b = v.pt.sub(v.d1).norm();
-    const c = v.pt.sub(v.d2).norm();
-    const angleDeg = Math.acos(((sq(b) + sq(c)) - sq(a)) / (2 * b * c)) * (180 / Math.PI);
-    return angleDeg < maxAngleDeg;
-  });
-
 const blue = new cv.Vec(255, 0, 0);
-const green = new cv.Vec(0, 255, 0);
-const red = new cv.Vec(0, 0, 255);
+
 
 // main
 const delay = 20;
@@ -145,7 +125,7 @@ grabFrames('../data/example5.mp4', delay, (frame) => {
     blue,
     { thickness: 2 }
   );
-
+  
   // display detection result
   const numFingersUp = verticesWithValidAngle.length;
   result.drawRectangle(
@@ -162,7 +142,7 @@ grabFrames('../data/example5.mp4', delay, (frame) => {
     fontScale,
     { color: green, thickness: 2 }
   );
-
+  
   const { rows, cols } = result;
   const sideBySide = new cv.Mat(rows, cols * 2, cv.CV_8UC3);
   result.copyTo(sideBySide.getRegion(new cv.Rect(0, 0, cols, rows)));

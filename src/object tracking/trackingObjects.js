@@ -125,14 +125,14 @@ grabFrames('../data/example5.mp4', delay, (frame) => {
   }
 //console.log("H: ", resizedImg.at(i,j).at(0), "S: ", resizedImg.at(i,j).at(1), "V: ", resizedImg.at(i,j).at(2));
   const maxPointDist = 25;
-  const hullIndices = getRoughHull(handContour, maxPointDist);
+
   
   const objectCenter = getObjectCenter(handContour);
 
 
   // get defect points of hull to contour and return vertices
   // of each hull point to its defect points
-  const vertices = getHullDefectVertices(handContour, hullIndices);
+
 
   // fingertip points are those which have a sharp angle to its defect points
   const maxAngleDeg = 60;

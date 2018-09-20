@@ -36,7 +36,7 @@ const getCenterPt = pts => pts.reduce(
 
 // get the polygon from a contours hull such that there
 // will be only a single hull point for a local neighborhood
-const getRoughHull = (contour, maxDist) => {
+/*const getRoughHull = (contour, maxDist) => {
   // get hull indices and hull points
   const hullIndices = contour.convexHullIndices();
   const contourPoints = contour.getPoints();
@@ -69,7 +69,7 @@ const getRoughHull = (contour, maxDist) => {
   // return contour indeces of most central points
   return pointGroups.map(getMostCentralPoint).map(ptWithIdx => ptWithIdx.contourIdx);
 };
-
+*/
 
   const getObjectCenter = (contour) => {
   // get hull indices and hull points
@@ -151,7 +151,7 @@ grabFrames('../data/example5.mp4', delay, (frame) => {
   }
 //console.log("H: ", resizedImg.at(i,j).at(0), "S: ", resizedImg.at(i,j).at(1), "V: ", resizedImg.at(i,j).at(2));
   const maxPointDist = 25;
-  const hullIndices = getRoughHull(handContour, maxPointDist);
+  //const hullIndices = getRoughHull(handContour, maxPointDist);
   
   const objectCenter = getObjectCenter(handContour);
 

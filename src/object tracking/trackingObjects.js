@@ -25,43 +25,6 @@ const getHandContour = (handMask) => {
   return contours.sort((c0, c1) => c1.area - c0.area)[0];
 };
 
-// get the polygon from a contours hull such that there
-// will be only a single hull point for a local neighborhood
-const getRoughHull = (contour, maxDist) => {
-  // get hull indices and hull points
-  const hullIndices = contour.convexHullIndices();
-  const contourPoints = contour.getPoints();
-  const hullPointsWithIdx = hullIndices.map(idx => ({
-    pt: contourPoints[idx],
-    contourIdx: idx
-  }));
-  const hullPoints = hullPointsWithIdx.map(ptWithIdx => ptWithIdx.pt);
-  
- // group all points in local neighborhood
-  const ptsBelongToSameCluster = (pt1, pt2) => ptDist(pt1, pt2) < maxDist;
-  const { labels } = cv.partition(hullPoints, ptsBelongToSameCluster);
-  const pointsByLabel = new Map();
-  labels.forEach(l => pointsByLabel.set(l, []));
-  hullPointsWithIdx.forEach((ptWithIdx, i) => {
-    const label = labels[i];
-    pointsByLabel.get(label).push(ptWithIdx);
-  });
-  
-  // map points in local neighborhood to most central point
-  const getMostCentralPoint = (pointGroup) => {
-    // find center
-    const center = getCenterPt(pointGroup.map(ptWithIdx => ptWithIdx.pt));
-    // sort ascending by distance to center
-    return pointGroup.sort(
-      (ptWithIdx1, ptWithIdx2) => ptDist(ptWithIdx1.pt, center) - ptDist(ptWithIdx2.pt, center)
-    )[0];
-  };
-  const pointGroups = Array.from(pointsByLabel.values());
-  // return contour indeces of most central points
-  return pointGroups.map(getMostCentralPoint).map(ptWithIdx => ptWithIdx.contourIdx);
-};
-
-
   const getObjectCenter = (contour) => {
   // get hull indices and hull points
   const hullIndices = contour.convexHullIndices();
@@ -105,18 +68,13 @@ grabFrames('../data/example5.mp4', delay, (frame) => {
   }
   
   const maxPointDist = 25;
-
   
   const objectCenter = getObjectCenter(handContour);
 
-
   // get defect points of hull to contour and return vertices
   // of each hull point to its defect points
-
-
   // fingertip points are those which have a sharp angle to its defect points
-  const maxAngleDeg = 60;
-  const verticesWithValidAngle = filterVerticesByAngle(vertices, maxAngleDeg);
+ 
 
   const result = resizedImg.copy();
   // draw bounding box and center line

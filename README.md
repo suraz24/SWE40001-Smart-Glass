@@ -1,1 +1,0 @@
-# SWE40001-Smart-Glass

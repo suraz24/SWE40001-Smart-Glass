@@ -23,54 +23,41 @@ const getHandContour = (handMask) => {
 };
 
 const getObjectCenter = (contour) => {
-  // get hull indices and hull points
-  const hullIndices = contour.convexHullIndices();
-  const contourPoints = contour.getPoints();
-  const hullPointsWithIdx = hullIndices.map(idx => ({
-    pt: contourPoints[idx],
-    contourIdx: idx
-  }));
-  const hullPoints = hullPointsWithIdx.map(ptWithIdx => ptWithIdx.pt);
+	// get hull indices and hull points
+	const hullIndices = contour.convexHullIndices();
+	const contourPoints = contour.getPoints();
+	const hullPointsWithIdx = hullIndices.map(idx => ({
+		pt: contourPoints[idx],
+		contourIdx: idx
+	}));
+	const hullPoints = hullPointsWithIdx.map(ptWithIdx => ptWithIdx.pt);
+  
   // get the x and y values of the center of the object 
-  var xpt = 0;		//contains the x cordinates
-  var ypt = 0;		// contains the y cordinates
-  for (var i=0;i<hullPoints.length;i++)
-  {
+	var xpt = 0;		//contains the x cordinates
+	var ypt = 0		// contains the y cordinates
+	for (var i=0;i<hullPoints.length;i++)
+	{
 	  xpt = xpt+(hullPoints[i].x)
 	  ypt = ypt+(hullPoints[i].y)
-  }
-  xpt =  (xpt/(hullPoints.length)).toFixed(0)
-  ypt = (ypt/(hullPoints.length)).toFixed(0)
-  console.log(xpt);
-  console.log(ypt);
-  return [xpt,ypt]    // returns an array with the x and y cordinates 
+	}
+	xpt =  (xpt/(hullPoints.length)).toFixed(0)
+	ypt = (ypt/(hullPoints.length)).toFixed(0)
+	return [xpt,ypt]    // returns an array with the x and y cordinates 
   };
   
-const blue = new cv.Vec(255, 0, 0);
-// main
-const delay = 20;
-grabFrames('../data/example5.mp4', delay, (frame) => {
-  const resizedImg = frame.resizeToMax(640);
-  const handMask = makeHandMask(resizedImg);
-  const handContour = getHandContour(handMask);
-  if (!handContour) {
-    return;
-  }
-  const maxPointDist = 25;
-  const objectCenter = getObjectCenter(handContour);
-  const result = resizedImg.copy();
-  // draw bounding box and center line
-  resizedImg.drawContours(
-    [handContour],
-    blue,
-    { thickness: 2 }
-  );
-  // display detection result
-  const { rows, cols } = result;
-  const sideBySide = new cv.Mat(rows, cols * 2, cv.CV_8UC3);
-  result.copyTo(sideBySide.getRegion(new cv.Rect(0, 0, cols, rows)));
-  resizedImg.copyTo(sideBySide.getRegion(new cv.Rect(cols, 0, cols, rows)));
+  const GetTraceCoordinate = (frame) =>{
+	const resizedImg = frame.resizeToMax(640);
 
-  cv.imshow('handMask', handMask);
-  cv.imshow('result', sideBySide);
-});
+	const handMask = makeHandMask(resizedImg);
+	const handContour = getHandContour(handMask);
+	if (!handContour) {
+		return;
+	}
+  
+	const objectCenter = getObjectCenter(handContour);
+	return objectCenter;
+  }
+  
+  module.exports = {
+	  GetTraceCoordinate: GetTraceCoordinate
+  }

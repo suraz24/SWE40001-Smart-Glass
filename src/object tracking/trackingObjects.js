@@ -161,8 +161,7 @@ grabFrames('../data/example5.mp4', delay, (frame) => {
   const vertices = getHullDefectVertices(handContour, hullIndices);
 
   // fingertip points are those which have a sharp angle to its defect points
-  const maxAngleDeg = 60;
-  const verticesWithValidAngle = filterVerticesByAngle(vertices, maxAngleDeg);
+ 
 
   const result = resizedImg.copy();
   // draw bounding box and center line

@@ -123,7 +123,7 @@ grabFrames('../data/example5.mp4', delay, (frame) => {
   if (!handContour) {
     return;
   }
-//console.log("H: ", resizedImg.at(i,j).at(0), "S: ", resizedImg.at(i,j).at(1), "V: ", resizedImg.at(i,j).at(2));
+  
   const maxPointDist = 25;
 
   

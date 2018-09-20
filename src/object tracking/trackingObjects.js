@@ -172,28 +172,6 @@ grabFrames('../data/example5.mp4', delay, (frame) => {
     { thickness: 2 }
   );
 
-  // draw points and vertices
-  verticesWithValidAngle.forEach((v) => {
-    resizedImg.drawLine(
-      v.pt,
-      v.d1,
-      { color: green, thickness: 2 }
-    );
-    resizedImg.drawLine(
-      v.pt,
-      v.d2,
-      { color: green, thickness: 2 }
-    );
-    resizedImg.drawEllipse(
-      new cv.RotatedRect(v.pt, new cv.Size(20, 20), 0),
-      { color: red, thickness: 2 }
-    );
-    result.drawEllipse(
-      new cv.RotatedRect(v.pt, new cv.Size(20, 20), 0),
-      { color: red, thickness: 2 }
-    );
-  });
-
   // display detection result
   const numFingersUp = verticesWithValidAngle.length;
   result.drawRectangle(

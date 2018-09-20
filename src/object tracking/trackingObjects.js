@@ -25,15 +25,6 @@ const getHandContour = (handMask) => {
   return contours.sort((c0, c1) => c1.area - c0.area)[0];
 };
 
-// returns distance of two points
-const ptDist = (pt1, pt2) => pt1.sub(pt2).norm();
-
-// returns center of all points
-const getCenterPt = pts => pts.reduce(
-    (sum, pt) => sum.add(pt),
-    new cv.Point(0, 0)
-  ).div(pts.length);
-
   const getObjectCenter = (contour) => {
   // get hull indices and hull points
   const hullIndices = contour.convexHullIndices();
@@ -60,47 +51,10 @@ console.log(ypt);
 return [xpt,ypt]    // returns an array with the x and y cordinates 
   };
 
-const getHullDefectVertices = (handContour, hullIndices) => {
-  const defects = handContour.convexityDefects(hullIndices);
-  const handContourPoints = handContour.getPoints();
 
-  // get neighbor defect points of each hull point
-  const hullPointDefectNeighbors = new Map(hullIndices.map(idx => [idx, []]));
-  defects.forEach((defect) => {
-    const startPointIdx = defect.at(0);
-    const endPointIdx = defect.at(1);
-    const defectPointIdx = defect.at(2);
-    hullPointDefectNeighbors.get(startPointIdx).push(defectPointIdx);
-    hullPointDefectNeighbors.get(endPointIdx).push(defectPointIdx);
-  });
-
-  return Array.from(hullPointDefectNeighbors.keys())
-    // only consider hull points that have 2 neighbor defects
-    .filter(hullIndex => hullPointDefectNeighbors.get(hullIndex).length > 1)
-    // return vertex points
-    .map((hullIndex) => {
-      const defectNeighborsIdx = hullPointDefectNeighbors.get(hullIndex);
-      return ({
-        pt: handContourPoints[hullIndex],
-        d1: handContourPoints[defectNeighborsIdx[0]],
-        d2: handContourPoints[defectNeighborsIdx[1]]
-      });
-    });
-};
-
-const filterVerticesByAngle = (vertices, maxAngleDeg) =>
-  vertices.filter((v) => {
-    const sq = x => x * x;
-    const a = v.d1.sub(v.d2).norm();
-    const b = v.pt.sub(v.d1).norm();
-    const c = v.pt.sub(v.d2).norm();
-    const angleDeg = Math.acos(((sq(b) + sq(c)) - sq(a)) / (2 * b * c)) * (180 / Math.PI);
-    return angleDeg < maxAngleDeg;
-  });
 
 const blue = new cv.Vec(255, 0, 0);
-const green = new cv.Vec(0, 255, 0);
-const red = new cv.Vec(0, 0, 255);
+
 
 // main
 const delay = 20;
@@ -112,17 +66,13 @@ grabFrames('../data/example5.mp4', delay, (frame) => {
   if (!handContour) {
     return;
   }
-//console.log("H: ", resizedImg.at(i,j).at(0), "S: ", resizedImg.at(i,j).at(1), "V: ", resizedImg.at(i,j).at(2));
+  
   const maxPointDist = 25;
-  //const hullIndices = getRoughHull(handContour, maxPointDist);
   
   const objectCenter = getObjectCenter(handContour);
 
-
   // get defect points of hull to contour and return vertices
   // of each hull point to its defect points
-  const vertices = getHullDefectVertices(handContour, hullIndices);
-
   // fingertip points are those which have a sharp angle to its defect points
  
 
@@ -133,7 +83,7 @@ grabFrames('../data/example5.mp4', delay, (frame) => {
     blue,
     { thickness: 2 }
   );
-
+  
   // display detection result
   const numFingersUp = verticesWithValidAngle.length;
   result.drawRectangle(
@@ -150,7 +100,7 @@ grabFrames('../data/example5.mp4', delay, (frame) => {
     fontScale,
     { color: green, thickness: 2 }
   );
-
+  
   const { rows, cols } = result;
   const sideBySide = new cv.Mat(rows, cols * 2, cv.CV_8UC3);
   result.copyTo(sideBySide.getRegion(new cv.Rect(0, 0, cols, rows)));

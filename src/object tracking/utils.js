@@ -1,4 +1,4 @@
-const cv = require('../../node_modules/opencv-build');
+const cv = require('../../node_modules/opencv4nodejs');
 
 exports.cv = cv;
 

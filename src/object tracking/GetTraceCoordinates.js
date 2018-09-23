@@ -1,5 +1,5 @@
-const cv = require('../');
-const { grabFrames } = require('./utils');
+const { cv } = require('./utils');
+
 // segmenting by skin color (has to be adjusted)
 const skinColorUpper = hue => new cv.Vec(hue, 0.8 * 255, 0.9 * 255);
 const skinColorLower = hue => new cv.Vec(hue, 0.1 * 255, 0.6 * 255);
@@ -31,33 +31,30 @@ const getObjectCenter = (contour) => {
 		contourIdx: idx
 	}));
 	const hullPoints = hullPointsWithIdx.map(ptWithIdx => ptWithIdx.pt);
-  
+
   // get the x and y values of the center of the object 
 	var xpt = 0;		//contains the x cordinates
 	var ypt = 0		// contains the y cordinates
-	for (var i=0;i<hullPoints.length;i++)
-	{
+	for (var i=0;i<hullPoints.length;i++) {
 	  xpt = xpt+(hullPoints[i].x)
 	  ypt = ypt+(hullPoints[i].y)
 	}
 	xpt =  (xpt/(hullPoints.length)).toFixed(0)
 	ypt = (ypt/(hullPoints.length)).toFixed(0)
 	return [xpt,ypt]    // returns an array with the x and y cordinates 
-  };
+};
   
-  const GetTraceCoordinate = (frame) =>{
+const GetTraceCoordinates = (frame) => {
 	const resizedImg = frame.resizeToMax(640);
-
 	const handMask = makeHandMask(resizedImg);
 	const handContour = getHandContour(handMask);
 	if (!handContour) {
 		return;
 	}
-  
 	const objectCenter = getObjectCenter(handContour);
 	return objectCenter;
-  }
-  
-  module.exports = {
-	  GetTraceCoordinate: GetTraceCoordinate
-  }
+}
+
+module.exports = {
+	GetTraceCoordinates: GetTraceCoordinates
+}

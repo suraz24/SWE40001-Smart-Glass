@@ -7,30 +7,19 @@ function FrameTrace(inputVideo){
     var frameNumber=0;    //saves the current frame number
     const delay = 20;
     var twoPointDistance;
-    const skinColorUpper = hue => new cv.Vec(hue, 0.8 * 255, 0.9 * 255);
-    const skinColorLower = hue => new cv.Vec(hue, 0.1 * 255, 0.6 * 255);
     const upperLeft = new cv.Point(0, 0)
 
     //later to be replaced with the snapshot
     Snapshot= cv.imread('../data/s1.jpg',cv.IMREAD_COLOR);
     grabFrames(inputVideo, delay, (frame) => {
-        const img = frame.resizeToMax(640);
-        const imgHLS = img.cvtColor(cv.COLOR_BGR2HLS);
-        const rangeMask = imgHLS.inRange(skinColorLower(100), skinColorUpper(180));
-        const mode = cv.RETR_EXTERNAL;
-        const method = cv.CHAIN_APPROX_SIMPLE;
-        const blurred = rangeMask.blur(new cv.Size(10, 10));
-        const thresholded = blurred.threshold(200, 255, cv.THRESH_BINARY);
-        const handMask = thresholded;
-        const contours = handMask.findContours(mode, method);
-        const handContour = contours.sort((c0, c1) => c1.area - c0.area)[0];
+        
 
         const drawParams = Object.assign(
             {},
             { thickness: 5 },   //can change the thickness of the drawing  
         )
 
-        storageArray[frameNumber]=getObjectCenter(handContour, 25); //saves every point from the start to this array
+        storageArray[frameNumber]=getObjectCenter(frame); //saves every point from the start to this array
 
         for(loop=1;loop<frameNumber;loop++){
         //distance between starting point and the current pooint

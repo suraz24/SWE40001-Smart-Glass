@@ -1,50 +1,82 @@
+/**
+ * 
+ * @summary On Start
+ * Once got user media(audio, video). Try to establish connection with server and the other peer
+ * 
+ * Connection initiator becomes Instrutor automatically, the other peer becomes Operator
+ * 
+ * Audio from both peers are streamed to each other regardless of roles via p2p
+ * Video from both peers are streamed to each other regardless of roles via p2p
+ * 
+ * Roles determines whether remote/local video to display
+ * Operator displays local video stream(from self)
+ * Instructor displays remote video stream(from operator)
+ * Instructor's Frames are captured and processed
+ * 
+ * Processed frames are sent to both users by server
+ *
+ * 
+ * @summary On switch roles
+ * When any of the two users press buttons to switch roles, both users switch roles
+ * 
+ * Operator plays remote video stream 
+ * Operator becomes Instructor^
+ * Instructor^ start sending frames to server
+ * 
+ * Instructor plays local video stream
+ * Instructor becomes Operator^
+ * Instructor^ stop sendng frames
+ * 
+ * 
+ * @summary On taking snapshot
+ * 
+ * 
+ * 
+ * 
+ */
+
 'use strict';
 
+var room = 'foo';
 var isChannelReady = false;
 var isInitiator = false;
 var isStarted = false
 var isConnected = false;
 
-var pc, remoteStream, remoteAudioStream, localAudioStream;
-
-
-var room = 'foo';
-
+var pc, remoteAudioStream, localAudioStream, remoteVideoStream, localVideoStream;
 var socket = io.connect({ reconnection: false });
 
-
-var remoteAudioPlayer = document.querySelector('#remoteAudio');
-var remoteVideoPlayer = document.querySelector('#remoteVideo');
-var localAudioPlayer = document.querySelector('#localAudio');
-var localVideoPlayer = document.querySelector('#localVideo');
-var canvas = document.querySelector('#canvas');
-var cvFrame = document.querySelector('#cvFrame');
-var bgFrame = document.querySelector('#bgFrame');
-var fgFrame = document.querySelector('#fgFrame');
-
 var width = 120;
-var height = 90;
+var height = 68;
 
-var my_role;
 const ROLES = ["INSTRUCTOR", "OPERATOR"];
+var sendFrameInterval;
+var my_role;
 
-var dataChannel;
+var remoteAudioPlayer = document.querySelector('#remoteAudio'); // Audio from remote peer
+var localVideoPlayer = document.querySelector('#localVideo');
+var bgVideoPlayer = document.querySelector('#bgVideo'); // Background video, usually from operator
+var fgFrame = document.querySelector('#fgFrame'); // Foreground frame, usually from instructor
+var canvas = document.querySelector('#canvas'); // Canvas for capturing/drawing local video
+canvas.width = width;
+canvas.height = height;
+var context = canvas.getContext('2d');
+
 
 /** Set up Media from device */
 navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream => {
-
     // Audio stream from local device
-    localAudioStream = stream
-
-    navigator.mediaDevices.getUserMedia({ audio: false, video: true }).then(stream => {
-
-        // Video stream from local device
-        localVideoPlayer.src = window.URL.createObjectURL(stream)
-        localVideoPlayer.play();
-
-        // // Send Frames to server
-        setInterval(() => sendFrame(localVideoPlayer), 100);
-
+    localAudioStream = stream;
+    
+    navigator.mediaDevices.getUserMedia({ audio: false, video: {width: width * 2, height: height * 2} }).then(stream => {
+    
+        
+        // // Video stream from local device
+        localVideoStream = stream;
+        
+        // Set local video soource to local stream
+        localVideoPlayer.src = window.URL.createObjectURL(localVideoStream);
+    
         // Notify server, maybe initiate peer connection
         sendMessage('got user media');
         if (isInitiator) {
@@ -62,26 +94,13 @@ if (room !== '') {
 /**
  * @description Client communication functions
  */
-
 /** @param {*} video Send video frames to server */
 function sendFrame(video) {
 
-    /** Check/get roles */
-    if (ROLES.indexOf(my_role) <= -1) { console.log("no roles", my_role); return; }
-    console.log("has role", my_role)
-    if (isConnected) {
-        var context = canvas.getContext('2d');
-        canvas.width = width;
-        canvas.height = height;
-        context.drawImage(video, 0, 0, width, height);
-        var jpgQuality = 0.6;
-        var theDataURL = canvas.toDataURL('image/jpeg', jpgQuality);
+    context.drawImage(video, 0, 0, width, height);
 
-        var frameObj = { data: theDataURL }
-
-        my_role === ROLES[0] ? socket.emit('fgFrame', frameObj) : socket.emit('bgFrame', frameObj);
-
-    }
+    socket.emit('s_fgFrame', canvas.toDataURL());
+ 
 }
 
 /**
@@ -97,27 +116,30 @@ function sendMessage(message) {
  * @description send the role to the other peer if connected
  */
 document.onkeypress = (e) => {
-    console.log("Key presssed; Changing Role");
-    EmitChangeRole();
+    console.log("Key presssed; Changing Role", e);
+    socket.emit('req_change_role');
 }
 
-/** 
- * @description A list of functions to handle socket events emitted by server
- */
+function doChangeRole() {
+    my_role = my_role == ROLES[0] ? ROLES[1] : ROLES[0];
+    document.querySelector('#role').innerHTML = my_role;
 
+    streamVideoAs(my_role);
+}
+
+///  A list of functions to handle socket events emitted by server
 
 /**
  * On Recieving processed frames from server
  */
-socket.on('bgFrame', data => {
-    bgFrame.src = data.data
-    // document.querySelector('#bgFrame').src = data.data
+
+socket.on('c_fgFrame', data => {
+    fgFrame.src = data
 });
-
-socket.on('fgFrame', data => {
-
-    fgFrame.src = data.data
-    // document.querySelector('#fgFrame').src = data.data
+socket.on('do_change_role', (t)=>{
+    if(t) {
+        doChangeRole();
+    }
 });
 
 socket.on('created', function (room) {
@@ -173,18 +195,65 @@ socket.on('message', function (message) {
  * @description A list of functions for establishing peer connection 
  */
 
+function streamVideoAs(role) {
+    print("streaming as", role);
+    // If my role is instructor
+    if (role == ROLES[0]) {
+        /**
+         * Set bgVideo to remote video
+         * Send frames to server
+         */
+        bgVideoPlayer.src = window.URL.createObjectURL(remoteVideoStream);
+        bgVideoPlayer.play();
+
+        localVideoPlayer.play();
+
+        
+        sendFrameInterval = setInterval(() => sendFrame(localVideoPlayer), 150);
+    }
+
+    // If my role is operator
+    if (role == ROLES[1]) {
+        /**
+         * Stop local video player (local frame capture)
+         * Stop sending frames if any
+         * Set bgVideo to local video
+         */
+        localVideoPlayer.pause();
+
+        if(sendFrameInterval) {
+            clearInterval(sendFrameInterval);
+        }
+
+        bgVideoPlayer.src = window.URL.createObjectURL(localVideoStream);
+        bgVideoPlayer.play();
+    }
+}
+
 function OnRemoteStream(event) {
+
     console.log('Remote stream recieved;', event);
-    remoteAudioStream = event.streams[0];
-    remoteAudioPlayer.srcObject = remoteAudioStream;
 
     // Connection Established
     isConnected = true;
 
+    // Initial role election
     my_role = isInitiator ? ROLES[0] : ROLES[1];
     document.querySelector('#role').innerHTML = my_role;
 
+    if (event.track.kind == 'audio') {
+        remoteAudioStream = event.streams[0];
+        remoteAudioPlayer.srcObject = remoteAudioStream;
+        console.log("go audio, playing now");
+    }
+    if (event.track.kind == 'video') {
+        remoteVideoStream = event.streams[0];
+        streamVideoAs(my_role);
+    }
+
+
 }
+
 
 function maybeStart() {
     console.log('>>>>>>> maybeStart() ', isStarted, localAudioStream, isChannelReady);
@@ -192,7 +261,9 @@ function maybeStart() {
         console.log('CLIENT: >>>>>> creating peer connection');
         createPeerConnection();
         pc.addStream(localAudioStream);
+        pc.addStream(localVideoStream);
         console.log("Added audio stream to peer");
+        console.log("Added video stream to peer");
         isStarted = true;
         console.log('isInitiator', isInitiator);
         if (isInitiator) {

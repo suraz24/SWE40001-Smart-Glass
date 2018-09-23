@@ -1,10 +1,14 @@
 var cv = require('opencv4nodejs');
 var { Mat } = require('opencv4nodejs');
-var GPU  = require('gpu.js');
+var GPU = require('gpu.js');
 var n = 0;
 
 
 module.exports = {
+
+     /**
+      * @deprecated, use @function ProcessHands(iFrame)
+      */
      ProcessFrames: function (iFrame, oFrame) {
 
           console.log("Processing Begin; Time:", getTime())
@@ -35,7 +39,7 @@ module.exports = {
           console.log("Processing Begin; Time:", getTime());
           iFrame = base64toMat(iFrame);
 
-          var processedMat =  grabHand(iFrame);
+          var processedMat = grabHand(iFrame);
           console.log("Grabhand done; Time:", getTime());
 
           var outBase64 = "data:image/png;base64," + cv.imencode('.png', processedMat).toString('base64');
@@ -51,12 +55,11 @@ module.exports = {
 // segmenting by skin color (has to be adjusted)
 const skinColorUpper = hue => new cv.Vec(hue, 0.8 * 255, 0.6 * 255);
 const skinColorLower = hue => new cv.Vec(hue, 0.1 * 255, 0.05 * 255);
-const transparentPixel = new cv.Vec4(0,0,0,0);
-// const transparentPixel = new cv.Vec4(0,0,0,0);
+const transparentPixel = new cv.Vec4(0, 0, 0, 0);
 
 /**
  * Extract hands from frame using mask
- * @param {Mat} handFrame 
+ * @param {Mat handFrame} handFrame 
  * @returns a Mat of original frame with inverted with hand mask
  */
 function grabHand(handFrame) {
@@ -77,8 +80,8 @@ function grabHand(handFrame) {
 /**
  * Extract hands from handFrame and combine with background frame
  * 
- * @param {Mat} handFrame 
- * @param {Mat} backgroundFrame 
+ * @param {Mat handFrame}
+ * @param {Mat backgroundFrame} 
  * @returns a Mat, combined with hands from handFrame and backgroundFrame
  */
 function grabCut(handFrame, backgroundFrame) {
@@ -95,7 +98,7 @@ function grabCut(handFrame, backgroundFrame) {
                if (handMask.at(i, j) == 0) {
                     let pixel = new cv.Vec(background.at(i, j).at(0), background.at(i, j).at(1), background.at(i, j).at(2));
                     ksrc.set(i, j, pixel);
-               } 
+               }
           }
      }
      return ksrc

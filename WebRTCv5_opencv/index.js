@@ -5,14 +5,14 @@ const path = require('path');
 const PORT = process.env.PORT || 5000
 var socketIO = require('socket.io');
 
-var { ProcessFrames, ProcessHands } = require('./gesture');
+var { ProcessHands } = require('./gesture');
 
 var app = express()
     .use(express.static(path.join(__dirname, 'public')))
     .set('views', path.join(__dirname, 'views'))
     .set('view engine', 'ejs')
     .get('/', (req, res) => res.render('pages/index'))
-    // .get('/admin', (req, res) => res.render('pages/admin'))
+    .get('/admin', (req, res) => res.render('pages/admin'))
     .listen(PORT, () => { console.log(`Listening on ${PORT}`) })
 
 var io = socketIO.listen(app);
@@ -21,9 +21,10 @@ const USER = { INSTRUCTOR: "INSTRUCTOR", OPERATOR: "OPERATOR" }
 
 var isProcessing = false
 var iFrame_isCaptured = false;
+var latest_snapshot = null;
 
 
-var bg_count, fg_count, fg_processed_count = 0;
+var fg_count = 0, fg_processed_count = 0;
 
 io.sockets.on('connection', function (socket) {
 
@@ -35,45 +36,56 @@ io.sockets.on('connection', function (socket) {
     }
 
     /**
-     * Recieved bgFrame, from operator
-     * Emit to all clients without processing
-     */
-    socket.on('bgFrame', data=>{
-        bg_count++;
-        console.log("bgFrame recieved:", bg_count, "\n");
-
-        io.sockets.emit('bgFrame', {data: data.data });
-    })
-    
-    /**
      * Recieved fgFrame, from instructor
      * Capture frame to @param iFrame, stop capturing while processing
      */
-    socket.on('fgFrame', data=>{
-        
+    socket.on('s_fgFrame', data => {
+
         fg_count++;
         console.log("fgFrame recieved:", fg_count);
-        
-        /*** Stop capturing if in progress */
-        if (iFrame_isCaptured && isProcessing && !data.data) return;
 
+        /*** Stop capturing if in progress */
+        if (isProcessing) return;
+
+        isProcessing = true;
         /*** Capture Frame, stop further capture until processing is done */
-        var iFrame = data.data
-        iFrame_isCaptured = true
+        // var iFrame = data
+        // iFrame_isCaptured = true
 
         /*** Process Frame */
-        var processedFrame = ProcessHands(iFrame);
-        
+        // var processedFrame = ProcessHands(data);
+
         fg_processed_count++;
         console.log("fgFrame processed:", fg_processed_count, "\n");
 
+
+        /** Capture the latest snapshot */
+        latest_snapshot = data;
+
         /*** Emit processed frame to all clients */
-        io.sockets.emit('fgFrame', {data: processedFrame });
+        // io.sockets.emit('c_fgFrame', processedFrame);
+        io.sockets.emit('c_fgFrame', ProcessHands(data));
+        // io.sockets.emit('c_fgFrame', data);
 
         /*** Reset Conditions */
-        iFrame_isCaptured = false;
+        // iFrame_isCaptured = false;
         isProcessing = false;
-        
+
+    });
+
+    /**
+     * 
+     */
+    socket.on('req_change_role', () => {
+        io.sockets.emit('do_change_role', true);
+    })
+
+    socket.on('admin_get_snapshot', () => {
+        if (latest_snapshot !== null) {
+            io.sockets.emit('admin_snapshot', latest_snapshot);
+        } else {
+            io.sockets.emit('admin_snapshot', false);
+        }
     })
 
 
@@ -105,7 +117,7 @@ io.sockets.on('connection', function (socket) {
                  * Process Frame, emit to all clients
                  */
                 var processedFrame = ProcessHands(iFrame);
-                io.sockets.emit('cvFrame', { type:'fgFrame', data: processedFrame });
+                io.sockets.emit('cvFrame', { type: 'fgFrame', data: processedFrame });
 
                 /**
                  * Reset Conditions
@@ -121,7 +133,7 @@ io.sockets.on('connection', function (socket) {
             /** 
              * No need to process operator's frames, relay frame back to all clients
              */
-            io.sockets.emit('cvFrame', { type:'bgFrame', data: data.data });
+            io.sockets.emit('cvFrame', { type: 'bgFrame', data: data.data });
         }
     })
 

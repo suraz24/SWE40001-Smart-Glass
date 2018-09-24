@@ -355,4 +355,3 @@ window.onbeforeunload = function () {
     isConnected = false;
     socket.close();
 };
-

@@ -49,7 +49,7 @@ const GetTraceCoordinates = (frame) => {
 	const handMask = makeHandMask(resizedImg);
 	const handContour = getHandContour(handMask);
 	if (!handContour) {
-		return;
+		return [-1,-1];
 	}
 	const objectCenter = getObjectCenter(handContour);
 	return objectCenter;

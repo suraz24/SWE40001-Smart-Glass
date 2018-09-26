@@ -1,46 +1,19 @@
 var {cv,state}  = require('./utils');
 var {ProcessFrames,ProcessHands} = require('./gesture');
 var {FrameTrace} = require('./FrameTrace');
+
 exports.state = state;
 module.exports = {
 	
 	
 	ProcessFrame: function(iFrame,oFrame,processState){
-	console.log("processState Type: ",typeof(processState));
-
-		if(processState ==  state.get('STREAM')){
-			if(snapShot != 0)
-			{
-				//reset snapshot for next trace 
-				resetTrace();
-			}
-			
-			if(iFrame)
-			{
-				return ProcessHands(iFrame);
-			}
-			else 
-			{
-				return -1;
-			}
+		if(state.get(processState) ==  state.get('STREAM')){
+			return streamState(iFrame,oFrame,processState);
 		}
-		else if(processState == state.get('TRACE')){
-			if(iFrame && oFrame)
-			{
-				if(snapShot == 0)
-				{
-					snapShot = oFrame;
-				}
-				const extractedHand = ProcessHands(iFrame);
-				const tracedFrame = FrameTrace(extractedHand,snapShot);
-				return tracedFrame;
-			}
-			else 
-			{
-				return -1;
-			}
+		else if(state.get(processState) == state.get('TRACE')){
+			return traceState(iFrame,oFrame,processState);
 		}
-		else if(processState == state.get('CALIBRATE'))
+		else if(state.get(processState) == state.get('CALIBRATE'))
 		{
 			//ToDo: add algorithm of color calibration
 			return -1;
@@ -48,12 +21,77 @@ module.exports = {
 		else{
 			console.log("GestureFacade::ProcessFrame-Error: invalid state!");
 		}
+	},
+	CalibrateColor: function(_skinColorLower,_skinColorUpper){
+		var CalibrateColorThresholdTrace  = require('./FrameTrace').CalibrateColorThreshold;
+		var CalibrateColorThresholdGesture = require('./gesture').CalibrateColorThreshold;
+		CalibrateColorThresholdTrace(_skinColorLower,_skinColorUpper);
+		CalibrateColorThresholdGesture(_skinColorLower,_skinColorUpper);
+	},
+	CalibrateGrabCutThreshold: function(_min,_max)
+	{
+		var ClaibrateThresholdGrabCutMinMax = require('./gesture').ClaibrateThresholdGrabCutMinMax;
+		ClaibrateThresholdGrabCutMinMax(_min,_max);
 	}
 }
 
-var snapShot = 0;
+
+function streamState(iFrame,oFrame,processState)
+{
+	console.log("Current State: STREAM");
+	if(snapShot != 0)
+	{
+		//reset snapshot for next trace 
+		resetTrace();
+	}
+	
+	if(iFrame)
+	{
+		return ProcessHands(iFrame);
+	}
+	else 
+	{
+		return -1;
+	}
+}
+
+function traceState(iFrame,oFrame,processState)
+{
+	console.log("Current State: TRACE");
+	if(iFrame && oFrame)
+	{
+		var extractedHand = ProcessHands(iFrame);
+		console.log("extractedHand: ", extractedHand);
+		iFrame = b64toMat(iFrame);
+		oFrame = b64toMat(oFrame);
+		extractedHand = b64toMat(extractedHand);
+		console.log("iFrame and oFrame converted to Mat type!");
+		if(snapShot == null)
+		{
+			snapShot = oFrame;
+			console.log("snapShot stored!");
+		}	
+		const tracedFrame = FrameTrace(extractedHand,snapShot);
+		return tracedFrame;
+	}
+	else 
+	{
+		return -1;
+	}
+}
+
+
+var snapShot = null;
 
 function resetTrace()
 {
-	snapShot = 0;
+	snapShot = null;
+}
+
+
+function  b64toMat(base64) 
+{
+		console.log("converting Base64 to Mat type!");
+		 var split = base64.split(',')[1]
+		 return cv.imdecode(Buffer.from(split, 'base64'));
 }

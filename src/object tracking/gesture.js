@@ -4,6 +4,7 @@ var trace = require('./FrameTrace');
 var n = 0;
 
 
+
 module.exports = {
 
      /**
@@ -44,20 +45,38 @@ module.exports = {
 		  //var traceMat = trace.FrameTrace(processedMat,processedMat); 
           console.log("Grabhand done; Time:", getTime());
 
-          var outBase64 = "data:image/png;base64," + cv.imencode('.png', traceMat).toString('base64');
+          var outBase64 = "data:image/png;base64," + cv.imencode('.png',processedMat).toString('base64');
 
           console.log("Processing End; Frame #", n, "\n");
 
           n++;
           return outBase64;
 
-     }
+     },
+	CalibrateColorThreshold: function(_skinColorLower,_skinColorUpper) {
+		console.log("CalibrateColorThreshold gesture - lower value:", _skinColorLower, ", upper value:", _skinColorUpper);
+		skinColorLower(_skinColorLower);
+		skinColorUpper(_skinColorUpper);
+	},
+	CalibrateThresholdGrabCutMinMax: function(_min,_max){
+		console.log("ClaibrateThresholdGrabCutMinMax - lower value: ", _min, ", upper value: ", _max);
+		thresholdValLower = _min;
+		thresholdValUpper = _max;
+	}
+	 
 }
 
 // segmenting by skin color (has to be adjusted)
 const skinColorUpper = hue => new cv.Vec(hue, 0.8 * 255, 0.6 * 255);
 const skinColorLower = hue => new cv.Vec(hue, 0.1 * 255, 0.05 * 255);
 const transparentPixel = new cv.Vec4(0, 0, 0, 0);
+var skinColorUpperSetting = skinColorUpper(12);
+var skinColorLowerSetting = skinColorLower(0);
+
+var thresholdValUpper = 500;
+var thresholdValLower = 100;
+
+
 
 /**
  * Extract hands from frame using mask
@@ -109,12 +128,12 @@ function grabCut(handFrame, backgroundFrame) {
 function makeHandMask(img) {
      // filter by skin color
      const imgHLS = img.cvtColor(cv.COLOR_BGR2HLS);
-     const rangeMask = imgHLS.inRange(skinColorLower(0), skinColorUpper(12));
+     const rangeMask = imgHLS.inRange(skinColorLowerSetting, skinColorUpperSetting);
 
      // remove noise
      const blurred = rangeMask.blur(new cv.Size(10, 10));
      //const thresholded = blurred.threshold(200, 255, cv.THRESH_BINARY);
-     const thresholded = blurred.threshold(100, 500, cv.THRESH_BINARY);
+     const thresholded = blurred.threshold(thresholdValLower,thresholdValUpper, cv.THRESH_BINARY);
 
      return thresholded;
 };

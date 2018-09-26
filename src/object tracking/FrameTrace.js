@@ -1,13 +1,13 @@
 const { grabFrames, cv } = require('./utils.js');
-const { GetTraceCoordinates } = require('./GetTraceCoordinates') 
+const { GetTraceCoordinates} = require('./GetTraceCoordinates') 
 
 let storageArray=[]; //saves every x,y point from the start
 let frameNumber=0;    //saves the current frame number
 
 
 function FrameTrace(frame,Snapshot){ 
-console.log("frame: ",frame);
-console.log("Snapshot: ",Snapshot);
+//console.log("frame: ",frame);
+//console.log("Snapshot: ",Snapshot);
 
 const upperLeft = new cv.Point(0, 0);
     const delay = 20;
@@ -52,4 +52,11 @@ function clearTrace()
 	frameNumber=0;    //saves the current frame number
 }
 
-module.exports = {FrameTrace : FrameTrace};
+module.exports = {
+	FrameTrace : FrameTrace,
+	CalibrateColorThreshold: function(_skinColorLower,_skinColorUpper){
+		const _CalibrateColorThreshold = require('./GetTraceCoordinates').CalibrateColorThreshold;
+		_CalibrateColorThreshold(_skinColorLower,_skinColorUpper);
+	}
+
+};

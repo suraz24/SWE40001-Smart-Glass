@@ -2,11 +2,12 @@
 
 const express = require('express');
 const path = require('path');
+
 const PORT = process.env.PORT || 5000
 var socketIO = require('socket.io');
 
 //var { ProcessHands } = require('../object tracking/gesture');
-var {ProcessFrame,state} = require('../object tracking/GestureFacade')
+var {ProcessFrame,state,CalibrateColor} = require('../object tracking/GestureFacade')
 
 var app = express()
     .use(express.static(path.join(__dirname, 'public')))
@@ -26,6 +27,10 @@ var latest_snapshot = null;
 
 
 var fg_count = 0, fg_processed_count = 0;
+
+//for thresholding settings
+var skinColorLower = 0;
+var skinColorUpper = 12;
 
 io.sockets.on('connection', function (socket) {
 
@@ -58,7 +63,9 @@ io.sockets.on('connection', function (socket) {
 
         fg_processed_count++;
         console.log("fgFrame processed:", fg_processed_count, "\n");
-
+		
+	
+		
 
         /** Capture the latest snapshot */
         latest_snapshot = data;
@@ -66,7 +73,8 @@ io.sockets.on('connection', function (socket) {
         /*** Emit processed frame to all clients */
         // io.sockets.emit('c_fgFrame', processedFrame);
         //io.sockets.emit('c_fgFrame', ProcessHands(data));
-		io.sockets.emit('c_fgFrame', ProcessFrame(data,0,state.get('STREAM')));
+		CalibrateColor(skinColorLower,skinColorUpper);
+		io.sockets.emit('c_fgFrame', ProcessFrame(data,latest_snapshot,'STREAM'));
         // io.sockets.emit('c_fgFrame', data);
 
         /*** Reset Conditions */
@@ -81,6 +89,48 @@ io.sockets.on('connection', function (socket) {
     socket.on('req_change_role', () => {
         io.sockets.emit('do_change_role', true);
     })
+	//******** Threshold settings *********
+	socket.on('req_increase_thresh_skin_color_upper', () =>{ 
+	//increase color threshold range value
+		if(skinColorUpper <= 200)
+		{
+			skinColorUpper += 1;
+		}
+		console.log("req_increase_thresh_skin_color_upper - ", skinColorLower,", skinColorUpper - ", skinColorUpper);
+	})
+	
+	socket.on('req_increase_thresh_skin_color_lower', () =>{ 
+	//increase color threshold range value
+		if(skinColorLower <= 200)
+		{
+			skinColorLower += 1;
+		}
+		console.log("req_increase_thresh_skin_color_lower - ", skinColorLower,", skinColorUpper - ", skinColorUpper);
+	})
+	
+	socket.on('req_decrease_thresh_skin_color_upper', () =>{
+	//decrease color threshold range value
+		if(skinColorUpper > 0)
+		{
+			skinColorUpper -= 1;
+		}
+		console.log("'req_decrease_thresh_skin_color_upper - ", skinColorLower,", skinColorUpper - ", skinColorUpper);
+	})
+	
+	
+	socket.on('req_decrease_thresh_skin_color_lower', () =>{
+	//decrease color threshold range value
+		if(skinColorLower > 0)
+		{
+			skinColorLower -= 1;
+		}
+		console.log("req_decrease_thresh_skin_color_lower - ", skinColorLower,", skinColorUpper - ", skinColorUpper);
+	})
+	
+	
+	
+	
+	//*******************************
 
     socket.on('admin_get_snapshot', () => {
         if (latest_snapshot !== null) {
@@ -89,6 +139,8 @@ io.sockets.on('connection', function (socket) {
             io.sockets.emit('admin_snapshot', false);
         }
     })
+	
+	
 
 
     /**
@@ -180,4 +232,6 @@ io.sockets.on('connection', function (socket) {
 
 
 });
+
+
 

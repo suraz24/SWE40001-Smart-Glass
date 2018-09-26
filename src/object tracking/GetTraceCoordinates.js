@@ -1,13 +1,16 @@
 const { cv } = require('./utils');
 
 // segmenting by skin color (has to be adjusted)
-const skinColorUpper = hue => new cv.Vec(hue, 0.8 * 255, 0.9 * 255);
-const skinColorLower = hue => new cv.Vec(hue, 0.1 * 255, 0.6 * 255);
+var skinColorUpper = hue => new cv.Vec(hue, 0.8 * 255, 0.9 * 255);
+var skinColorLower = hue => new cv.Vec(hue, 0.1 * 255, 0.6 * 255);
+
+var skinColorUpperSetting = skinColorUpper(12);
+var skinColorLowerSetting = skinColorLower(0);
 
 const makeHandMask = (img) => {
   // filter by skin color
   const imgHLS = img.cvtColor(cv.COLOR_BGR2HLS);
-  const rangeMask = imgHLS.inRange(skinColorLower(100), skinColorUpper(180));
+  const rangeMask = imgHLS.inRange(skinColorLowerSetting, skinColorUpperSetting);
   // remove noise
   const blurred = rangeMask.blur(new cv.Size(10, 10));
   const thresholded = blurred.threshold(200, 255, cv.THRESH_BINARY);
@@ -18,6 +21,7 @@ const getHandContour = (handMask) => {
   const mode = cv.RETR_EXTERNAL;
   const method = cv.CHAIN_APPROX_SIMPLE;
   const contours = handMask.findContours(mode, method);
+  console.log("getHandContour: contours - ",contours.sort((c0, c1) => c1.area - c0.area)[0]);
   // largest contour
   return contours.sort((c0, c1) => c1.area - c0.area)[0];
 };
@@ -45,6 +49,8 @@ const getObjectCenter = (contour) => {
 };
   
 const GetTraceCoordinates = (frame) => {
+	//console.log("GetTraceCoordinates - frame: ", frame);
+	//console.log("frame type: ", typeof(frame));
 	const resizedImg = frame.resizeToMax(640);
 	const handMask = makeHandMask(resizedImg);
 	const handContour = getHandContour(handMask);
@@ -56,5 +62,11 @@ const GetTraceCoordinates = (frame) => {
 }
 
 module.exports = {
-	GetTraceCoordinates: GetTraceCoordinates
+	GetTraceCoordinates: GetTraceCoordinates,
+	CalibrateColorThreshold: function(_skinColorLower,_skinColorUpper) {
+	console.log("CalibrateColorThreshold getTraceCoordinates - lower value:", _skinColorLower, ", upper value:", _skinColorUpper);
+		skinColorLower(_skinColorLower);
+		skinColorUpper(_skinColorUpper);
+	
+	}
 }

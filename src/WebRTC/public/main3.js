@@ -117,7 +117,58 @@ function sendMessage(message) {
  */
 document.onkeypress = (e) => {
     console.log("Key presssed; Changing Role", e);
-    socket.emit('req_change_role');
+    
+	if(e.charCode== 46) // . (period) key
+	{
+		if(e.ctrlKey == false)
+		{
+		//alert("ArrowUp - req_increase_thresh");
+		socket.emit('req_increase_thresh_skin_color_upper');
+		}
+		else
+		{
+		socket.emit('req_increase_thresh_grab_cut_upper');
+		}
+	}
+	else if(e.charCode == 62) // > key
+	{
+		if(e.ctrlKey == false)
+		{
+		socket.emit('req_increase_thresh_skin_color_lower');
+		}
+		else 
+		{
+		socket.emit('req_increase_thresh_grab_cut_lower');
+		}
+	}
+	else if(e.charCode == 44) // , (comma) key
+	{
+		//alert("ArrowDown - req_decrease_thresh");
+		if(e.ctrlKey == false)
+		{
+		socket.emit('req_decrease_thresh_skin_color_upper');
+		}
+		else 
+		{
+		socket.emit('req_decrease_thresh_grab_cut_upper');
+		}
+		
+	}
+	else if(e.charCode == 60) // < key
+	{
+		if(e.ctrlKey == false)
+		{
+		socket.emit('req_decrease_thresh_skin_color_lower');
+		}
+		else
+		{
+		socket.emit('req_decrease_thresh_grab_cut_lower');
+		}
+	}
+	else 
+	{
+		socket.emit('req_change_role');
+	}
 }
 
 function doChangeRole() {

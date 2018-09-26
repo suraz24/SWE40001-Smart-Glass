@@ -166,6 +166,16 @@ document.onkeypress = (e) => {
 		socket.emit('req_decrease_thresh_grab_cut_lower');
 		}
 	}
+	else if(e.charCode == 115)// s (lower case) key
+	{
+		//streaming state
+		socket.emit('req_streaming_state');
+	}
+	else if(e.charCode == 116)// t (lower case) key
+	{
+		//trace state
+		socket.emit('req_trace_state');
+	}
 	else 
 	{
 		socket.emit('req_change_role');

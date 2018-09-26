@@ -1,6 +1,6 @@
 var {cv,state}  = require('./utils');
 var {ProcessFrames,ProcessHands} = require('./gesture');
-var {FrameTrace} = require('./FrameTrace');
+var {FrameTrace,clearTrace} = require('./FrameTrace');
 
 exports.state = state;
 module.exports = {
@@ -61,7 +61,7 @@ function traceState(iFrame,oFrame,processState)
 	if(iFrame && oFrame)
 	{
 		var extractedHand = ProcessHands(iFrame);
-		console.log("extractedHand: ", extractedHand);
+		//console.log("extractedHand: ", extractedHand);
 		iFrame = b64toMat(iFrame);
 		oFrame = b64toMat(oFrame);
 		extractedHand = b64toMat(extractedHand);
@@ -72,7 +72,8 @@ function traceState(iFrame,oFrame,processState)
 			console.log("snapShot stored!");
 		}	
 		const tracedFrame = FrameTrace(extractedHand,snapShot);
-		return tracedFrame;
+		const tracedFrameOutBase64 = outBase64(tracedFrame);
+		return tracedFrameOutBase64;
 	}
 	else 
 	{
@@ -86,6 +87,7 @@ var snapShot = null;
 function resetTrace()
 {
 	snapShot = null;
+	clearTrace();
 }
 
 
@@ -94,4 +96,10 @@ function  b64toMat(base64)
 		console.log("converting Base64 to Mat type!");
 		 var split = base64.split(',')[1]
 		 return cv.imdecode(Buffer.from(split, 'base64'));
+}
+
+function outBase64(processedMat)
+{
+	var _outBase64 = "data:image/png;base64," + cv.imencode('.png',processedMat).toString('base64');
+	return _outBase64;
 }

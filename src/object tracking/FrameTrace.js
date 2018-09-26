@@ -9,6 +9,7 @@ function FrameTrace(frame,Snapshot){
 //console.log("frame: ",frame);
 //console.log("Snapshot: ",Snapshot);
 
+cv.imshow('frame',frame);
 const upperLeft = new cv.Point(0, 0);
     const delay = 20;
     var twoPointDistance;
@@ -16,8 +17,22 @@ const upperLeft = new cv.Point(0, 0);
             {},
             { thickness: 5 },   //can change the thickness of the drawing  
         )
-
-        storageArray[frameNumber]=GetTraceCoordinates(frame); //saves every point from the start to this array
+		var coodinates = GetTraceCoordinates(frame); //saves every point from the start to this array
+		if(coodinates != null)
+		{
+			storageArray[frameNumber]=coordinates
+		}
+		else
+		{
+			if(frameNumber > 0)
+			{
+				storageArray[frameNumber] = storageArray[frameNumber - 1];
+			}
+			else 
+			{
+				storageArray[frameNumber] = [0,0];
+			}
+		}
 		console.log("frameNumber = ",frameNumber);
 		console.log("storageArray[frameNumber]: ", storageArray[frameNumber]);
 		if(storageArray[frameNumber][0] != -1 && storageArray[frameNumber][1] != -1)
@@ -42,6 +57,7 @@ const upperLeft = new cv.Point(0, 0);
         console.log('x: '+storageArray[frameNumber][0]+" y: "+storageArray[frameNumber][1]+" Distance: "+twoPointDistance);        
         frameNumber++;
         cv.imshow('Snapshot',Snapshot); 
+		const key = cv.waitKey(20);
 		return Snapshot;
 }
 
@@ -57,6 +73,6 @@ module.exports = {
 	CalibrateColorThreshold: function(_skinColorLower,_skinColorUpper){
 		const _CalibrateColorThreshold = require('./GetTraceCoordinates').CalibrateColorThreshold;
 		_CalibrateColorThreshold(_skinColorLower,_skinColorUpper);
-	}
-
+	},
+	clearTrace : clearTrace
 };

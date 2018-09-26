@@ -28,9 +28,12 @@ var latest_snapshot = null;
 
 var fg_count = 0, fg_processed_count = 0;
 
-//for thresholding settings
+//Thresholding settings
 var skinColorLower = 0;
 var skinColorUpper = 12;
+//State settings
+const STATE = {STREAM: 'STREAM',TRACE: 'TRACE'}
+var currentState = STATE.STREAM;
 
 io.sockets.on('connection', function (socket) {
 
@@ -74,7 +77,7 @@ io.sockets.on('connection', function (socket) {
         // io.sockets.emit('c_fgFrame', processedFrame);
         //io.sockets.emit('c_fgFrame', ProcessHands(data));
 		CalibrateColor(skinColorLower,skinColorUpper);
-		io.sockets.emit('c_fgFrame', ProcessFrame(data,latest_snapshot,'STREAM'));
+		io.sockets.emit('c_fgFrame', ProcessFrame(data,latest_snapshot,currentState));
         // io.sockets.emit('c_fgFrame', data);
 
         /*** Reset Conditions */
@@ -89,7 +92,10 @@ io.sockets.on('connection', function (socket) {
     socket.on('req_change_role', () => {
         io.sockets.emit('do_change_role', true);
     })
-	//******** Threshold settings *********
+	
+	/***********************************************
+       *  Threshold settings
+       *********************************************** */
 	socket.on('req_increase_thresh_skin_color_upper', () =>{ 
 	//increase color threshold range value
 		if(skinColorUpper <= 200)
@@ -126,8 +132,19 @@ io.sockets.on('connection', function (socket) {
 		}
 		console.log("req_decrease_thresh_skin_color_lower - ", skinColorLower,", skinColorUpper - ", skinColorUpper);
 	})
+	/***********************************************
+       *  state settings
+       *********************************************** */
+	socket.on('req_streaming_state',() =>{
+		console.log("STATE: STREAMING STATE!!");
+		currentState = STATE.STREAM;
+	})
 	
 	
+	socket.on('req_trace_state',() =>{
+		console.log("STATE: TRACE STATE!!");
+		currentState = STATE.TRACE;
+	})
 	
 	
 	//*******************************

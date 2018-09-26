@@ -21,7 +21,6 @@ const getHandContour = (handMask) => {
   const mode = cv.RETR_EXTERNAL;
   const method = cv.CHAIN_APPROX_SIMPLE;
   const contours = handMask.findContours(mode, method);
-  console.log("getHandContour: contours - ",contours.sort((c0, c1) => c1.area - c0.area)[0]);
   // largest contour
   return contours.sort((c0, c1) => c1.area - c0.area)[0];
 };
@@ -45,6 +44,7 @@ const getObjectCenter = (contour) => {
 	}
 	xpt =  (xpt/(hullPoints.length)).toFixed(0)
 	ypt = (ypt/(hullPoints.length)).toFixed(0)
+	console.log("getObjectCenter: xpt - ", xpt, ", ypt - ",ypt);
 	return [xpt,ypt]    // returns an array with the x and y cordinates 
 };
   
@@ -55,7 +55,7 @@ const GetTraceCoordinates = (frame) => {
 	const handMask = makeHandMask(resizedImg);
 	const handContour = getHandContour(handMask);
 	if (!handContour) {
-		return [-1,-1];
+		return null;
 	}
 	const objectCenter = getObjectCenter(handContour);
 	return objectCenter;

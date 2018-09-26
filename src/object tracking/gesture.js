@@ -1,5 +1,4 @@
-var cv = require('opencv4nodejs');
-var { Mat } = require('opencv4nodejs');
+var {cv,Mat} = require('./utils');
 var trace = require('./FrameTrace');
 //var GPU = require('gpu.js');
 var n = 0;
@@ -42,7 +41,7 @@ module.exports = {
 
           var processedMat = grabHand(iFrame);
 		  //Note: need to change Snapshot parameter to operator background for trace.FrameTrace(frame,Snapshot)
-		  var traceMat = trace.FrameTrace(processedMat,processedMat); 
+		  //var traceMat = trace.FrameTrace(processedMat,processedMat); 
           console.log("Grabhand done; Time:", getTime());
 
           var outBase64 = "data:image/png;base64," + cv.imencode('.png', traceMat).toString('base64');

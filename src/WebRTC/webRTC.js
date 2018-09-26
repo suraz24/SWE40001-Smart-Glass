@@ -5,7 +5,8 @@ const path = require('path');
 const PORT = process.env.PORT || 5000
 var socketIO = require('socket.io');
 
-var { ProcessHands } = require('../object tracking/gesture');
+//var { ProcessHands } = require('../object tracking/gesture');
+var {ProcessFrame,state} = require('../object tracking/GestureFacade')
 
 var app = express()
     .use(express.static(path.join(__dirname, 'public')))
@@ -64,7 +65,8 @@ io.sockets.on('connection', function (socket) {
 
         /*** Emit processed frame to all clients */
         // io.sockets.emit('c_fgFrame', processedFrame);
-        io.sockets.emit('c_fgFrame', ProcessHands(data));
+        //io.sockets.emit('c_fgFrame', ProcessHands(data));
+		io.sockets.emit('c_fgFrame', ProcessFrame(data,0,state.get('STREAM')));
         // io.sockets.emit('c_fgFrame', data);
 
         /*** Reset Conditions */

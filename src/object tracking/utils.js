@@ -1,6 +1,10 @@
-const cv = require('../../node_modules/opencv4nodejs');
-
+//const cv = require('../../node_modules/opencv4nodejs');
+const cv = require('opencv4nodejs');
+const Enum = require('enum');
+const state = new Enum(['STREAM','TRACE','CALIBRATE']);
+exports.state = state;
 exports.cv = cv;
+exports.Mat = Mat;
 
 exports.grabFrames = (videoFile, delay, onFrame) => {
   const cap = new cv.VideoCapture(videoFile);

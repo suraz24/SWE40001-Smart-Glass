@@ -22,7 +22,7 @@ module.exports = {
 			console.log("GestureFacade::ProcessFrame-Error: invalid state!");
 		}
 	},
-	CalibrateColor: function(_skinColorLower,_skinColorUpper){
+	CalibrateColorRange: function(_skinColorLower,_skinColorUpper){
 		var CalibrateColorThresholdTrace  = require('./FrameTrace').CalibrateColorThreshold;
 		var CalibrateColorThresholdGesture = require('./gesture').CalibrateColorThreshold;
 		CalibrateColorThresholdTrace(_skinColorLower,_skinColorUpper);
@@ -32,7 +32,20 @@ module.exports = {
 	{
 		var ClaibrateThresholdGrabCutMinMax = require('./gesture').ClaibrateThresholdGrabCutMinMax;
 		ClaibrateThresholdGrabCutMinMax(_min,_max);
+	},
+	skinColorUpperHSV: function(h,s,v)
+	{
+		console.log("skinColorUpperHSV: h - ",h,", s - ",s," v - ",v);
+		var skinColorUpperHSV = require('./utils').skinColorUpperHSV;
+		return skinColorUpperHSV(h,s,v);
+	},
+	skinColorLowerHSV: function(h,s,v)
+	{
+		console.log("skinColorLowerHSV: h - ",h,", s - ",s," v - ",v);
+		var skinColorLowerHSV = require('./utils').skinColorLowerHSV;
+		return skinColorLowerHSV(h,s,v);
 	}
+	
 }
 
 

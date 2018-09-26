@@ -65,8 +65,7 @@ module.exports = {
 	GetTraceCoordinates: GetTraceCoordinates,
 	CalibrateColorThreshold: function(_skinColorLower,_skinColorUpper) {
 	console.log("CalibrateColorThreshold getTraceCoordinates - lower value:", _skinColorLower, ", upper value:", _skinColorUpper);
-		skinColorLower(_skinColorLower);
-		skinColorUpper(_skinColorUpper);
-	
+		skinColorLowerSetting = _skinColorLower;
+		skinColorUpperSetting = _skinColorUpper;
 	}
 }

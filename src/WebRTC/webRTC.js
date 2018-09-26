@@ -7,7 +7,12 @@ const PORT = process.env.PORT || 5000
 var socketIO = require('socket.io');
 
 //var { ProcessHands } = require('../object tracking/gesture');
-var {ProcessFrame,state,CalibrateColor} = require('../object tracking/GestureFacade')
+var {ProcessFrame,
+		state,
+		CalibrateColorRange,
+		CalibrateGrabCutThreshold,
+		skinColorUpperHSV,
+		skinColorLowerHSV} = require('../object tracking/GestureFacade');
 
 var app = express()
     .use(express.static(path.join(__dirname, 'public')))
@@ -31,6 +36,22 @@ var fg_count = 0, fg_processed_count = 0;
 //Thresholding settings
 var skinColorLower = 0;
 var skinColorUpper = 12;
+var grabCutThreshLower = 100;
+var grabCutThreshUpper = 500;
+//colour hsv setting 
+var hRaw = 200/255;
+var hHigh = hRaw*1.1;
+var hLow  = hRaw*0.9;
+
+var sRaw = (0.8*255)/255;
+var sHigh = sRaw*1.1;
+var sLow = sRaw*0.9;
+
+var vRaw = (0.6*255)/255;
+var vHigh = vRaw*1.1;
+var vLow = vRaw*0.9;
+
+
 //State settings
 const STATE = {STREAM: 'STREAM',TRACE: 'TRACE'}
 var currentState = STATE.STREAM;
@@ -76,7 +97,9 @@ io.sockets.on('connection', function (socket) {
         /*** Emit processed frame to all clients */
         // io.sockets.emit('c_fgFrame', processedFrame);
         //io.sockets.emit('c_fgFrame', ProcessHands(data));
-		CalibrateColor(skinColorLower,skinColorUpper);
+		
+		CalibrateColorRange(skinColorLowerHSV(hLow,sLow,vLow),skinColorUpperHSV(hHigh,sHigh,vHigh));
+		//CalibrateGrabCutThreshold(grabCutThreshLower,grabCutThreshUpper);
 		io.sockets.emit('c_fgFrame', ProcessFrame(data,latest_snapshot,currentState));
         // io.sockets.emit('c_fgFrame', data);
 
@@ -96,6 +119,7 @@ io.sockets.on('connection', function (socket) {
 	/***********************************************
        *  Threshold settings
        *********************************************** */
+
 	socket.on('req_increase_thresh_skin_color_upper', () =>{ 
 	//increase color threshold range value
 		if(skinColorUpper <= 200)
@@ -104,7 +128,6 @@ io.sockets.on('connection', function (socket) {
 		}
 		console.log("req_increase_thresh_skin_color_upper - ", skinColorLower,", skinColorUpper - ", skinColorUpper);
 	})
-	
 	socket.on('req_increase_thresh_skin_color_lower', () =>{ 
 	//increase color threshold range value
 		if(skinColorLower <= 200)
@@ -113,7 +136,6 @@ io.sockets.on('connection', function (socket) {
 		}
 		console.log("req_increase_thresh_skin_color_lower - ", skinColorLower,", skinColorUpper - ", skinColorUpper);
 	})
-	
 	socket.on('req_decrease_thresh_skin_color_upper', () =>{
 	//decrease color threshold range value
 		if(skinColorUpper > 0)
@@ -132,6 +154,16 @@ io.sockets.on('connection', function (socket) {
 		}
 		console.log("req_decrease_thresh_skin_color_lower - ", skinColorLower,", skinColorUpper - ", skinColorUpper);
 	})
+		/***********************************************
+       *  color selector settings
+       *********************************************** */
+	socket.on('admin_calibrate_hsv',data =>{
+		hRaw = data[0];
+		sRaw = data[1];
+		vRaw = data[2];
+		console.log("admin_calibrate_hsv: hRaw - ",data[0], ",sRaw - ",data[1],",vRaw - ",data[2]);
+	})
+	
 	/***********************************************
        *  state settings
        *********************************************** */

@@ -3,6 +3,11 @@ const cv= require('opencv4nodejs');
 const {Mat} = require('opencv4nodejs');
 const Enum = require('enum');
 const state = new Enum(['STREAM','TRACE','CALIBRATE']);
+
+const skinColorUpperHSV = (h,s,v) => new cv.Vec(h*255,s*255,v*255);
+const skinColorLowerHSV = (h,s,v) => new cv.Vec(h*255,s*255,v*255);
+exports.skinColorUpperHSV = skinColorUpperHSV;
+exports.skinColorLowerHSV = skinColorLowerHSV;
 exports.state = state;
 exports.cv = cv;
 exports.Mat = Mat;

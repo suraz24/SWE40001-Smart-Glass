@@ -181,6 +181,11 @@ document.onkeypress = (e) => {
 	}
 }
 
+
+document.onclick = (e) => {
+	console.log("mouse clicked!", e);
+}
+
 function doChangeRole() {
     my_role = my_role == ROLES[0] ? ROLES[1] : ROLES[0];
     document.querySelector('#role').innerHTML = my_role;

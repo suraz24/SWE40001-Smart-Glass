@@ -5,7 +5,7 @@ const path = require('path');
 const PORT = process.env.PORT || 5000
 var socketIO = require('socket.io');
 
-var { ProcessFrames, ProcessHands } = require('./gesture');
+var { ProcessFrames, ProcessHands } = require('../object tracking/gesture');
 
 var app = express()
     .use(express.static(path.join(__dirname, 'public')))

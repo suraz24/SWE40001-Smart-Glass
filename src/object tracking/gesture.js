@@ -55,8 +55,8 @@ module.exports = {
      },
 	CalibrateColorThreshold: function(_skinColorLower,_skinColorUpper) {
 		console.log("CalibrateColorThreshold gesture - lower value:", _skinColorLower, ", upper value:", _skinColorUpper);
-		skinColorLower(_skinColorLower);
-		skinColorUpper(_skinColorUpper);
+		skinColorLowerSetting = _skinColorLower;
+		skinColorUpperSetting = _skinColorUpper;
 	},
 	CalibrateThresholdGrabCutMinMax: function(_min,_max){
 		console.log("ClaibrateThresholdGrabCutMinMax - lower value: ", _min, ", upper value: ", _max);

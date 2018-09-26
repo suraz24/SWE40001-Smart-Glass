@@ -1,4 +1,4 @@
-const { cv } = require('./utils');
+const { cv,skinColorUpperHSV,skinColorLowerHSV } = require('./utils');
 
 // segmenting by skin color (has to be adjusted)
 var skinColorUpper = hue => new cv.Vec(hue, 0.8 * 255, 0.9 * 255);
@@ -7,10 +7,14 @@ var skinColorLower = hue => new cv.Vec(hue, 0.1 * 255, 0.6 * 255);
 var skinColorUpperSetting = skinColorUpper(12);
 var skinColorLowerSetting = skinColorLower(0);
 
+var percent_h = 0.7;
+var percent_v = 0.7;
+var percent_s = 0.8;
+
 const makeHandMask = (img) => {
   // filter by skin color
   const imgHLS = img.cvtColor(cv.COLOR_BGR2HLS);
-  const rangeMask = imgHLS.inRange(skinColorLowerSetting, skinColorUpperSetting);
+  const rangeMask = imgHLS.inRange(skinColorLowerHSV(((percent_h-0.3)*360)/2, (percent_s - 0.3)* 255, (percent_v - 0.3)* 255),skinColorUpperHSV(((percent_h + 0.3)*360)/2,(percent_s + 0.3) * 255,(percent_v + 0.3) * 255));
   // remove noise
   const blurred = rangeMask.blur(new cv.Size(10, 10));
   const thresholded = blurred.threshold(200, 255, cv.THRESH_BINARY);
@@ -54,10 +58,12 @@ const GetTraceCoordinates = (frame) => {
 	const resizedImg = frame.resizeToMax(640);
 	const handMask = makeHandMask(resizedImg);
 	const handContour = getHandContour(handMask);
+	//cv.imshow('handContour',handContour);
 	if (!handContour) {
 		return null;
 	}
 	const objectCenter = getObjectCenter(handContour);
+	console.log("GetTraceCoordinates - objectCenter", objectCenter);
 	return objectCenter;
 }
 
@@ -67,5 +73,11 @@ module.exports = {
 	console.log("CalibrateColorThreshold getTraceCoordinates - lower value:", _skinColorLower, ", upper value:", _skinColorUpper);
 		skinColorLowerSetting = _skinColorLower;
 		skinColorUpperSetting = _skinColorUpper;
+	},
+	setHSVPercent: function(h,s,v) { //decimal value percentage
+		console.log("setHSVPercent GetTraceCoordinates - h - ",h,", s - ", s ,", v - ", v);
+		percent_h = h;
+		percent_v = s;
+		percent_s = v;
 	}
 }

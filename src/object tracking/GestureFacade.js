@@ -34,8 +34,11 @@ module.exports = {
 		ClaibrateThresholdGrabCutMinMax(_min,_max);
 	},
 	setHSVPercent: function(h,s,v){ //decimal value percentage
-	    var _setHSVPercent = require('./gesture').setHSVPercent;
-		_setHSVPercent(h,s,v);
+	    var _setHSVPercentGesture = require('./gesture').setHSVPercent;
+		var _setHSVPercentTrace = require('./FrameTrace').setHSVPercent;
+		_setHSVPercentGesture(h,s,v);
+		_setHSVPercentTrace(h,s,v);
+		
 	},
 	skinColorUpperHSV: function(h,s,v)
 	{

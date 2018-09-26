@@ -1,5 +1,5 @@
 var {cv,state}  = require('./utils');
-var {ProcessFrames,ProcessHands} = require('./gesture');
+var {ProcessFrames,ProcessHands,setHSVPercent} = require('./gesture');
 var {FrameTrace,clearTrace} = require('./FrameTrace');
 
 exports.state = state;
@@ -32,6 +32,10 @@ module.exports = {
 	{
 		var ClaibrateThresholdGrabCutMinMax = require('./gesture').ClaibrateThresholdGrabCutMinMax;
 		ClaibrateThresholdGrabCutMinMax(_min,_max);
+	},
+	setHSVPercent: function(h,s,v){ //decimal value percentage
+	    var _setHSVPercent = require('./gesture').setHSVPercent;
+		_setHSVPercent(h,s,v);
 	},
 	skinColorUpperHSV: function(h,s,v)
 	{

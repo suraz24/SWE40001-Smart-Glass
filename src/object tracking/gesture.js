@@ -1,4 +1,4 @@
-var {cv,Mat} = require('./utils');
+var {cv,Mat,skinColorUpperHSV,skinColorLowerHSV} = require('./utils');
 var trace = require('./FrameTrace');
 //var GPU = require('gpu.js');
 var n = 0;
@@ -58,6 +58,12 @@ module.exports = {
 		skinColorLowerSetting = _skinColorLower;
 		skinColorUpperSetting = _skinColorUpper;
 	},
+	setHSVPercent: function(h,s,v) { //decimal value percentage
+		console.log("setHSVPercent Gesture - h - ",h,", s - ", s ,", v - ", v);
+		percent_h = h;
+		percent_v = s;
+		percent_s = v;
+	},
 	CalibrateThresholdGrabCutMinMax: function(_min,_max){
 		console.log("ClaibrateThresholdGrabCutMinMax - lower value: ", _min, ", upper value: ", _max);
 		thresholdValLower = _min;
@@ -69,12 +75,20 @@ module.exports = {
 // segmenting by skin color (has to be adjusted)
 const skinColorUpper = hue => new cv.Vec(hue, 0.8 * 255, 0.6 * 255);
 const skinColorLower = hue => new cv.Vec(hue, 0.1 * 255, 0.05 * 255);
+
 const transparentPixel = new cv.Vec4(0, 0, 0, 0);
 var skinColorUpperSetting = skinColorUpper(12);
 var skinColorLowerSetting = skinColorLower(0);
 
-var thresholdValUpper = 500;
+var _skinColorUpperSetting = () => new cv.Vec(12,0.8*255,0.6*255);
+var _skinColorLowerSetting = () => new cv.Vec(0,0.1*255,0.6*255);
+
+var thresholdValUpper = 800;
 var thresholdValLower = 100;
+
+var percent_h = 0.7;
+var percent_v = 0.7;
+var percent_s = 0.8;
 
 
 
@@ -128,7 +142,10 @@ function grabCut(handFrame, backgroundFrame) {
 function makeHandMask(img) {
      // filter by skin color
      const imgHLS = img.cvtColor(cv.COLOR_BGR2HLS);
-     const rangeMask = imgHLS.inRange(skinColorLowerSetting, skinColorUpperSetting);
+	 
+     //const rangeMask = imgHLS.inRange(_skinColorLowerSetting, _skinColorUpperSetting);
+	 //const rangeMask = imgHLS.inRange(skinColorLowerHSV(((0.82-0.05)*360)/2, 0.1* 255, 0.05* 255),skinColorUpperHSV(((0.82+0.05)*360)/2,0.8 * 255,0.6* 255));
+	 const rangeMask = imgHLS.inRange(skinColorLowerHSV(((percent_h-0.3)*360)/2, (percent_s - 0.3)* 255, (percent_v - 0.3)* 255),skinColorUpperHSV(((percent_h + 0.3)*360)/2,(percent_s + 0.3) * 255,(percent_v + 0.3) * 255));
 
      // remove noise
      const blurred = rangeMask.blur(new cv.Size(10, 10));

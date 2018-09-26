@@ -11,8 +11,9 @@ var {ProcessFrame,
 		state,
 		CalibrateColorRange,
 		CalibrateGrabCutThreshold,
-		skinColorUpperHSV,
-		skinColorLowerHSV} = require('../object tracking/GestureFacade');
+		//skinColorUpperHSV,
+		//skinColorLowerHSV,
+		setHSVPercent} = require('../object tracking/GestureFacade');
 
 var app = express()
     .use(express.static(path.join(__dirname, 'public')))
@@ -40,16 +41,16 @@ var grabCutThreshLower = 100;
 var grabCutThreshUpper = 500;
 //colour hsv setting 
 var hRaw = 200/255;
-var hHigh = hRaw*1.1;
-var hLow  = hRaw*0.9;
+var hHigh = hRaw*1.2;
+var hLow  = hRaw*0.8;
 
 var sRaw = (0.8*255)/255;
-var sHigh = sRaw*1.1;
-var sLow = sRaw*0.9;
+var sHigh = sRaw*1.2;
+var sLow = sRaw*0.8;
 
 var vRaw = (0.6*255)/255;
-var vHigh = vRaw*1.1;
-var vLow = vRaw*0.9;
+var vHigh = vRaw*1.2;
+var vLow = vRaw*0.8;
 
 
 //State settings
@@ -98,8 +99,9 @@ io.sockets.on('connection', function (socket) {
         // io.sockets.emit('c_fgFrame', processedFrame);
         //io.sockets.emit('c_fgFrame', ProcessHands(data));
 		
-		CalibrateColorRange(skinColorLowerHSV(hLow,sLow,vLow),skinColorUpperHSV(hHigh,sHigh,vHigh));
+		//CalibrateColorRange(skinColorLowerHSV(hLow*360,sLow*255,vLow*255),skinColorUpperHSV(hHigh*360,sHigh*255,vHigh*255));
 		//CalibrateGrabCutThreshold(grabCutThreshLower,grabCutThreshUpper);
+		setHSVPercent(hRaw,sRaw,vRaw);
 		io.sockets.emit('c_fgFrame', ProcessFrame(data,latest_snapshot,currentState));
         // io.sockets.emit('c_fgFrame', data);
 

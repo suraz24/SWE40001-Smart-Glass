@@ -52,7 +52,7 @@
 
                var p = context.getImageData(x, y, 1, 1).data;
 
-               message.innerHTML = rgbToHsv(p[0], p[1], p[2]).toString();
+               message.innerHTML = "RGB: " + p[0] +","+ p[1]+","+ p[2]+","+"HSV: " + rgbToHsv(p[0], p[1], p[2]).toString();
 			   socket.emit('admin_calibrate_hsv',rgbToHsv(p[0],p[1],p[2]));
           })
 

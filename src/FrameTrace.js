@@ -15,12 +15,6 @@ console.log("frame: ",frame);
 
 //cv.imshow('frame',combineFrames(frame,Snapshot));
 
-
-function base64toMat(base64) {
-	var split = base64.split(',')[1]
-	return cv.imdecode(Buffer.from(split, 'base64'));
-}
-
 var Snapshot = base64toMat('../s1.jpg');
 Snapshot = combineFrames(frame,Snapshot);
 //Snapshot= cv.imread('../s1.jpg',cv.IMREAD_COLOR);
@@ -99,6 +93,13 @@ function combineFrames(hand,snapshot)
 	return src;
 
 }
+
+
+function base64toMat(base64) {
+	var split = base64.split(',')[1]
+	return cv.imdecode(Buffer.from(split, 'base64'));
+}
+
 
 function clearTrace()
 {

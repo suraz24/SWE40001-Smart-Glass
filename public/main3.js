@@ -257,12 +257,12 @@ function streamVideoAs(role) {
 /**
  * @description Client communication functions
  */
+
 /** @param {*} video Send video frames to server */
 function sendFrame(video) {
     context.drawImage(video, 0, 0, width, height);
     socket.emit('fgFrame', canvas.toDataURL());
 }
-
 
 /**
  * @description send the role to the other peer if connected
@@ -283,6 +283,7 @@ document.onkeypress = (e) => {
  * @summary Server Listeners
  */
 socket.on('fgFrame', data => {
+    console.log("FGFRAME: ", data);
     fgFrame.src = data
 });
 

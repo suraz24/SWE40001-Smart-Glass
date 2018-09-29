@@ -23,7 +23,7 @@ const USER = { INSTRUCTOR: "INSTRUCTOR", OPERATOR: "OPERATOR" }
 
 var isProcessing = false;
 var iFrame_isCaptured = false;
-var latest_snapshot = null;
+var snapshot = null;
 
 // States
 var isStreaming = true;
@@ -46,6 +46,8 @@ io.sockets.on('connection', function (socket) {
      * Capture frame to @param iFrame, stop capturing while processing
      */
     socket.on('fgFrame', data => {
+        
+        if(!data) return;
 
         fg_count++;
         console.log("fgFrame recieved:", fg_count);
@@ -55,8 +57,6 @@ io.sockets.on('connection', function (socket) {
 
         isProcessing = true;
 
-        /** Capture the latest snapshot */
-        latest_snapshot = data;
 
         if (isStreaming) {
             /*** Process Frame */
@@ -66,14 +66,15 @@ io.sockets.on('connection', function (socket) {
             /*** Reset Conditions */
             isProcessing = false;
         }
-
         if (isTracing) {
-            /*** Process Frame */
-            var processedFrame = FrameTrace(data);
-            /*** Emit processed frame to all clients */
-            io.sockets.emit('fgFrame', processedFrame);
-            /*** Reset Conditions */
-            isProcessing = false;
+            
+                    console.log("STATE: isTracing");
+                    /*** Process Frame */
+                    var processedFrame = FrameTrace(data);
+                    /*** Emit processed frame to all clients */
+                    io.sockets.emit('fgFrame', processedFrame);
+                    /*** Reset Conditions */
+                    isProcessing = false;
         }
 
 
@@ -87,6 +88,7 @@ io.sockets.on('connection', function (socket) {
      * Emit last frame(instructor) to all clients's bgFrame
      */
     socket.on('notify_sketching', () => {
+        console.log("STATE: NOTIFY_SKETCHING");
         isStreaming = false;
         isTracing = true;
         io.sockets.emit('do_sketching', true);
@@ -99,6 +101,7 @@ io.sockets.on('connection', function (socket) {
      * Tell all clints to go back to stremaing
      */
     socket.on('notify_streaming', () => {
+        console.log("STATE: NOTIFY_STREAMING");
         isStreaming = true;
         isTracing = false;
         io.sockets.emit('do_streaming', true);

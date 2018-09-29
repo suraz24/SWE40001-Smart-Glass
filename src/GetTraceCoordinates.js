@@ -49,14 +49,14 @@ const getObjectCenter = (contour) => {
 	xpt =  (xpt/(hullPoints.length)).toFixed(0)
 	ypt = (ypt/(hullPoints.length)).toFixed(0)
 	console.log("getObjectCenter: xpt - ", xpt, ", ypt - ",ypt);
-	return [xpt,ypt]    // returns an array with the x and y cordinates 
+	return new cv.Point(xpt, ypt); // returns an array with the x and y cordinates 
 };
   
 const GetTraceCoordinates = (frame) => {
 	//console.log("GetTraceCoordinates - frame: ", frame);
 	//console.log("frame type: ", typeof(frame));
-	const resizedImg = frame.resizeToMax(640);
-	const handMask = makeHandMask(resizedImg);
+	// const resizedImg = frame.resizeToMax(640);
+	const handMask = makeHandMask(frame);
 	const handContour = getHandContour(handMask);
 	//cv.imshow('handContour',handContour);
 	if (!handContour) {

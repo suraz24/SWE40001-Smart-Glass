@@ -1,43 +1,43 @@
 {
-    "name": "swe40001-smart-glass",
-    "version": "1.0.0",
-    "description": "Smart Glass Based Remote Guidance System",
-    "engines": {
-      "node": "8.9.1"
-    },
-    "main": "src/webRTC.js",
-    "scripts": {
-      "start": "node src/webRTC.js",
-      "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "dependencies": {
-      "ejs": "^2.5.6",
-      "enum": "^2.5.0",
-      "express": "^4.15.2",
-      "keypress": "^0.2.1",
-      "node-static": "^0.7.10",
-      "opencv-build": "0.0.15",
-      "opencv4nodejs": "^4.8.0",
-      "socket.io": "^2.1.1"
-    },
-    "devDependencies": {
-      "request": "^2.81.0",
-      "tape": "^4.7.0"
-    },
-    "repository": {
-      "type": "git",
-      "url": "git+https://github.com/suraz24/SWE40001-Smart-Glass.git"
-    },
-    "keywords": [
-      "node",
-      "heroku",
-      "express",
-      "opencv"
-    ],
-    "author": "Group_21_Swinburne_University",
-    "license": "MIT",
-    "bugs": {
-      "url": "https://github.com/suraz24/SWE40001-Smart-Glass/issues"
-    },
-    "homepage": "https://github.com/suraz24/SWE40001-Smart-Glass#readme"
-  }
+  "name": "swe40001-smart-glass",
+  "version": "1.0.0",
+  "description": "Smart Glass Based Remote Guidance System",
+  "engines": {
+    "node": "8.9.1"
+  },
+  "main": "src/webRTC.js",
+  "scripts": {
+    "start": "node src/webRTC.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "ejs": "^2.5.6",
+    "enum": "^2.5.0",
+    "express": "^4.15.2",
+    "keypress": "^0.2.1",
+    "node-static": "^0.7.10",
+    "opencv-build": "0.0.15",
+    "opencv4nodejs": "^4.8.0",
+    "socket.io": "^2.1.1"
+  },
+  "devDependencies": {
+    "request": "^2.81.0",
+    "tape": "^4.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/suraz24/SWE40001-Smart-Glass.git"
+  },
+  "keywords": [
+    "node",
+    "heroku",
+    "express",
+    "opencv"
+  ],
+  "author": "Group_21_Swinburne_University",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/suraz24/SWE40001-Smart-Glass/issues"
+  },
+  "homepage": "https://github.com/suraz24/SWE40001-Smart-Glass#readme"
+}

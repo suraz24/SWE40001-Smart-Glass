@@ -45,7 +45,7 @@ io.sockets.on('connection', function (socket) {
      * Recieved fgFrame, from instructor
      * Capture frame to @param iFrame, stop capturing while processing
      */
-    socket.on('s_fgFrame', data => {
+    socket.on('fgFrame', data => {
 
         fg_count++;
         console.log("fgFrame recieved:", fg_count);
@@ -61,12 +61,12 @@ io.sockets.on('connection', function (socket) {
         if (isStreaming) {
             /*** Process Frame */
             var processedFrame = ProcessHands(data);
-            
+
             fg_processed_count++;
             console.log("fgFrame processed:", fg_processed_count, "\n");
 
             /*** Emit processed frame to all clients */
-            io.sockets.emit('c_fgFrame', processedFrame);
+            io.sockets.emit('fgFrame', processedFrame);
             /*** Reset Conditions */
             isProcessing = false;
         }
@@ -90,10 +90,10 @@ io.sockets.on('connection', function (socket) {
      * Turn on tracing
      * Emit last frame(instructor) to all clients's bgFrame
      */
-    socket.on('req_trace_state', data => {
+    socket.on('notify_sketching', () => {
         isStreaming = false;
         isTracing = true;
-        io.sockets.emit('do_trace_state', data);
+        io.sockets.emit('do_sketching', true);
     })
 
     /**
@@ -102,10 +102,10 @@ io.sockets.on('connection', function (socket) {
      * Turn on Stremaing
      * Tell all clints to go back to stremaing
      */
-    socket.on('req_streaming_state', () => {
+    socket.on('notify_streaming', () => {
         isStreaming = true;
         isTracing = false;
-        io.sockets.emit('do_streaming_state');
+        io.sockets.emit('do_streaming', true);
     })
 
 
@@ -113,7 +113,7 @@ io.sockets.on('connection', function (socket) {
     /**
      * ON Role change requested by a client, notify all clients to change their role
      */
-    socket.on('req_change_role', () => {
+    socket.on('notify_change_role', () => {
         io.sockets.emit('do_change_role', true);
     })
 
@@ -126,14 +126,6 @@ io.sockets.on('connection', function (socket) {
         vRaw = data[2];
         console.log("admin_calibrate_hsv: hRaw - ", data[0], ",sRaw - ", data[1], ",vRaw - ", data[2]);
     })
-
-    /**
-     * instructor request 
-     */
-    socket.on('req_trace', () => {
-
-    })
-
 
     /**
      * Admin request snapshot(from instructor) from server
@@ -213,8 +205,11 @@ io.sockets.on('connection', function (socket) {
     */
     socket.on('create or join', function (room) {
         log('Received request to create or join room ' + room);
+        if (socket.handshake.headers.referer.indexOf("/admin") > -1) {
+            console.log("admin is trying to connect, dont let him join");
+            return;
+        }
 
-        /** */
         var clientsInRoom = io.sockets.adapter.rooms[room];
         var numClients = clientsInRoom ? Object.keys(clientsInRoom.sockets).length : 0;
 

@@ -49,7 +49,12 @@ var socket = io.connect({ reconnection: false });
 var width = 120;
 var height = 68;
 
-const ROLES = ["INSTRUCTOR", "OPERATOR"];
+const ROLES = { INSTRUCTOR: "INSTRUCTOR", OPERATOR: "OPERATOR" };
+
+const STATE = { STREAMING, SKETCHING }
+
+var CURRENT_STATE = null;
+
 var sendFrameInterval;
 var my_role;
 
@@ -57,7 +62,6 @@ var remoteAudioPlayer = document.querySelector('#remoteAudio'); // Audio from re
 var localVideoPlayer = document.querySelector('#localVideo');
 var bgVideoPlayer = document.querySelector('#bgVideo'); // Background video, usually from operator
 var fgFrame = document.querySelector('#fgFrame'); // Foreground frame, usually from instructor
-var bgFrame = document.querySelector('#bgFrame'); // Foreground frame, usually from instructor
 var canvas = document.querySelector('#canvas'); // Canvas for capturing/drawing local video
 canvas.width = width;
 canvas.height = height;
@@ -71,7 +75,7 @@ navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream =
     // Audio stream from local device
     localAudioStream = stream;
 
-    navigator.mediaDevices.getUserMedia({ audio: false, video: { width: width * 2, height: height * 2 } }).then(stream => {
+    navigator.mediaDevices.getUserMedia({ audio: false, video: { width: width * 2, height: height * 2, frameRate: 10 } }).then(stream => {
 
 
         // // Video stream from local device
@@ -88,10 +92,166 @@ navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream =
     })
 });
 
-/** */
+/**
+ * Try to join room on server via socket
+ */
 if (room !== '') {
     socket.emit('create or join', room);
     console.log('CLIENT: Attempted to create or  join room', room);
+}
+
+
+/**
+ * @description  This function is fired once connections between peers have been established 
+ * AND once peers have started exchanging media streams
+ * Set @var my_role, 
+ * Set @var CURRENT_STATE = STATE.STREAMING
+ * Set respective DOM object source to mediastream
+ * @param {MediaStream} MediaStream event 
+ */
+function OnRemoteStream(event) {
+
+    console.log('Remote stream recieved;', event);
+
+    // Connection Established
+    isConnected = true;
+
+    // Initial role election
+    my_role = isInitiator ? ROLES.INSTRUCTOR : ROLES.OPERATOR;
+
+    CURRENT_STATE = STATE.STREAMING;
+
+    document.querySelector('#role').innerHTML = my_role;
+
+    if (event.track.kind == 'audio') {
+        remoteAudioStream = event.streams[0];
+        remoteAudioPlayer.srcObject = remoteAudioStream;
+        console.log("go audio, playing now");
+    }
+    if (event.track.kind == 'video') {
+        remoteVideoStream = event.streams[0];
+        streamVideoAs(my_role);
+    }
+}
+
+/**
+ * @description  This function is called when the INSTRUCTOR client request to start sketching
+ * Notify all clients to switch to STATE.SKETCHING mode, set @var CURRENT_STATE to STATE.SKETCHING
+ */
+function notifySketching() {
+    if (my_role == ROLES.INSTRUCTOR) {
+        socket.emit('notify_sketching');
+    } else return;
+}
+/**
+ * @description This function fires when a INSTRUCTOR notifies all clients 
+ * to switch STATE.SKETCHING, inclusive.
+ * Set @var CURRENT_STATE = STATE.SKETCHING
+ * 
+ * @OPERATOR: PAUSE and HIDE local video, wait for fg_frame from server
+ * @INSTRUCTOR: PAUSE and HIDE remote video, continue playing localVideo(hidden) for sendFrame()
+ */
+socket.on('do_sketching', data => {
+    if (data) {
+        if (my_role == ROLES.INSTRUCTOR) {
+            bgVideoPlayer.style.display = "none";
+            bgVideoPlayer.pause();
+        } else if (my_role == ROLES.OPERATOR) {
+            localVideoPlayer.pause();
+            localVideoPlayer.style.display = "none";
+        }
+        CURRENT_STATE = STATE.SKETCHING;
+    }
+})
+
+
+/**
+ * @description This function fires when INSTRUCTOR client request to switch to STATE.STREAMING
+ * Since STATE.STREAMING is the app's initial state, this function can only be called when NOT in 
+ * STATE.STREAMING state, in this case, can only be called when in STATE.SKETCHING. Only callable by INSTRUCTOR client
+ * 
+ * Notify all clients to switch back to STATE.STREAMING mode
+ * 
+ */
+function notifyStreaming() {
+    if (my_role == ROLES.INSTRUCTOR) {
+        socket.emit('notify_streaming');
+    } else return;
+}
+/**
+ * @description This function fires when client is notified to switch to STATE.STREAMING
+ * Set @var CURRENT_STATE = STATE.STREAMING
+ * 
+ * @OPERATOR: SHOW and PLAY local video, wait for fg_frame as usual
+ * @INSTRUCTOR: SHOW and PLAY remote video, continue playing localVideo(hidden) for sendFrame()
+ */
+socket.on('do_streaming', data => {
+    if (data) {
+        if (my_role == ROLES.INSTRUCTOR) {
+            bgVideoPlayer.style.display = "block";
+            bgVideoPlayer.play();
+        } else if (my_role == ROLES.OPERATOR) {
+            localVideoPlayer.play();
+            bgVideoPlayer.style.display = "block";
+        }
+        CURRENT_STATE = STATE.STREAMING;
+    }
+})
+
+/**
+ * @description This function notifies all clients to change their role
+ * This will only execute while the clients are in STATE.STREAMING
+ */
+function notifyChangeRole() {
+    if (CURRENT_STATE == STATE.STREAMING) {
+        socket.emit('notify_change_role');
+    }
+}
+/**
+ * @description This fires when a client request to change role
+ * SET @var my_role swap between INSTRUCTOR && OPERATOR
+ */
+socket.on('do_change_role', data => {
+    if (data) {
+        document.querySelector('#role').innerHTML = my_role;
+        my_role = my_role == ROLES.INSTRUCTOR ? ROLES.OPERATOR : ROLES.INSTRUCTOR;
+        streamVideoAs(my_role);
+    }
+});
+
+
+/**
+ * @description Start Streaming video base on @var my_role
+ * @INSTRUCTOR:
+ *  Set REMOTE video stream(from OPERATOR) to bgVideoPlayer DOM source
+ *  PLAY LOCAL video stream(from self, is hidden) to capture frames
+ *  Bind and start sendFrame() interval to @var sendFrameInterval
+ * @OPERATOR:
+ *  PAUSE LOCAL video stream(from self, not hidden)
+ *  SET @var sendFrameInterval=>clearInterval() if exists
+ *  Bind LOCAL video stream(from self) to bgVideoPlayer DOM source
+ *  PLAY LOCAL video stream
+ * @param {ROLES} role 
+ */
+function streamVideoAs(role) {
+    console.log("streaming as", role);
+    if (role == ROLES.INSTRUCTOR) {
+        bgVideoPlayer.src = window.URL.createObjectURL(remoteVideoStream);
+        bgVideoPlayer.play();
+
+        localVideoPlayer.play();
+
+
+        sendFrameInterval = setInterval(() => sendFrame(localVideoPlayer), 150);
+    }
+    if (role == ROLES.OPERATOR) {
+        localVideoPlayer.pause();
+        if (sendFrameInterval) {
+            clearInterval(sendFrameInterval);
+        }
+        bgVideoPlayer.src = window.URL.createObjectURL(localVideoStream);
+        bgVideoPlayer.play();
+    }
 }
 
 /**
@@ -100,130 +260,31 @@ if (room !== '') {
 /** @param {*} video Send video frames to server */
 function sendFrame(video) {
     context.drawImage(video, 0, 0, width, height);
-    lastFrame = canvas.toDataURL();
-    socket.emit('s_fgFrame', lastFrame);
-
+    socket.emit('fgFrame');
 }
 
-/**
- * @description send a message to server
- * @param {string} message 
- */
-function sendMessage(message) {
-    console.log('CLIENT: Client sending message: ', message);
-    socket.emit('message', message);
-}
 
 /**
  * @description send the role to the other peer if connected
  */
 document.onkeypress = (e) => {
     console.log("Key presssed; Changing Role", e);
-
-    if (e.charCode == 46) // . (period) key
-    {
-        if (e.ctrlKey == false) {
-            //alert("ArrowUp - req_increase_thresh");
-            socket.emit('req_increase_thresh_skin_color_upper');
-        }
-        else {
-            socket.emit('req_increase_thresh_grab_cut_upper');
-        }
-    }
-    else if (e.charCode == 62) // > key
-    {
-        if (e.ctrlKey == false) {
-            socket.emit('req_increase_thresh_skin_color_lower');
-        }
-        else {
-            socket.emit('req_increase_thresh_grab_cut_lower');
-        }
-    }
-    else if (e.charCode == 44) // , (comma) key
-    {
-        //alert("ArrowDown - req_decrease_thresh");
-        if (e.ctrlKey == false) {
-            socket.emit('req_decrease_thresh_skin_color_upper');
-        }
-        else {
-            socket.emit('req_decrease_thresh_grab_cut_upper');
-        }
-
-    }
-    else if (e.charCode == 60) // < key
-    {
-        if (e.ctrlKey == false) {
-            socket.emit('req_decrease_thresh_skin_color_lower');
-        }
-        else {
-            socket.emit('req_decrease_thresh_grab_cut_lower');
-        }
-    }
-    else if (e.charCode == 115)// s (lower case) key
-    {
-        //streaming state
-        if (my_role == ROLES[0]) {
-            socket.emit('req_streaming_state');
-        }
-    }
-    else if (e.charCode == 116)// t (lower case) key
-    {
-        if (my_role == ROLES[0]) {
-            socket.emit('req_trace_state', lastFrame);
-        }
+    // t (lower case) key
+    if (e.charCode == 116) {
+        notifySketching();
     }
     else {
-        socket.emit('req_change_role');
+        notifyChangeRole();
     }
 }
 
-
-document.onclick = (e) => {
-    console.log("mouse clicked!", e);
-}
-
-function doChangeRole() {
-    my_role = my_role == ROLES[0] ? ROLES[1] : ROLES[0];
-    document.querySelector('#role').innerHTML = my_role;
-
-    streamVideoAs(my_role);
-}
-
-///  A list of functions to handle socket events emitted by server
 
 /**
- * On Recieving processed frames from server
+ * @summary Server Listeners
  */
-
-socket.on('c_fgFrame', data => {
+socket.on('fgFrame', data => {
     fgFrame.src = data
 });
-socket.on('do_change_role', (t) => {
-    if (t) {
-        doChangeRole();
-    }
-});
-
-/// Do streaming
-socket.on('do_streaming_state', () => {
-    bgVideoPlayer.play();
-    bgVideoPlayer.style.display = "block";
-    bgFrame.style.display = 'none';
-    bgFrame.src = null;
-})
-
-/// Switch to trace mode with a snapshot of operator's 
-/// Stop playing all videos
-socket.on('do_trace_state', (data) => {
-    // start tracing mode
-    // if is instructor, stop && hide video player
-    if (my_role == ROLES[1]) {
-        bgVideoPlayer.pause();
-    }
-    bgVideoPlayer.style.display = "none";
-    bgFrame.style.display = "block";
-    bgFrame.src = data;
-})
 
 socket.on('created', function (room) {
     console.log('CLIENT: Created room ' + room);
@@ -278,65 +339,14 @@ socket.on('message', function (message) {
  * @description A list of functions for establishing peer connection 
  */
 
-function streamVideoAs(role) {
-    console.log("streaming as", role);
-    // If my role is instructor
-    if (role == ROLES[0]) {
-        /**
-         * Set bgVideo to remote video
-         * Send frames to server
-         */
-        bgVideoPlayer.src = window.URL.createObjectURL(remoteVideoStream);
-        bgVideoPlayer.play();
-
-        localVideoPlayer.play();
-
-
-        sendFrameInterval = setInterval(() => sendFrame(localVideoPlayer), 150);
-    }
-
-    // If my role is operator
-    if (role == ROLES[1]) {
-        /**
-         * Stop local video player (local frame capture)
-         * Stop sending frames if any
-         * Set bgVideo to local video
-         */
-        localVideoPlayer.pause();
-
-        if (sendFrameInterval) {
-            clearInterval(sendFrameInterval);
-        }
-
-        bgVideoPlayer.src = window.URL.createObjectURL(localVideoStream);
-        bgVideoPlayer.play();
-    }
+/**
+ * @description send a message to server
+ * @param {string} message 
+ */
+function sendMessage(message) {
+    console.log('CLIENT: Client sending message: ', message);
+    socket.emit('message', message);
 }
-
-function OnRemoteStream(event) {
-
-    console.log('Remote stream recieved;', event);
-
-    // Connection Established
-    isConnected = true;
-
-    // Initial role election
-    my_role = isInitiator ? ROLES[0] : ROLES[1];
-    document.querySelector('#role').innerHTML = my_role;
-
-    if (event.track.kind == 'audio') {
-        remoteAudioStream = event.streams[0];
-        remoteAudioPlayer.srcObject = remoteAudioStream;
-        console.log("go audio, playing now");
-    }
-    if (event.track.kind == 'video') {
-        remoteVideoStream = event.streams[0];
-        streamVideoAs(my_role);
-    }
-
-
-}
-
 
 function maybeStart() {
     console.log('>>>>>>> maybeStart() ', isStarted, localAudioStream, isChannelReady);

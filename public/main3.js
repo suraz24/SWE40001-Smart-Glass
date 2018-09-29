@@ -260,7 +260,7 @@ function streamVideoAs(role) {
 /** @param {*} video Send video frames to server */
 function sendFrame(video) {
     context.drawImage(video, 0, 0, width, height);
-    socket.emit('fgFrame');
+    socket.emit('fgFrame', canvas.toDataURL());
 }
 
 

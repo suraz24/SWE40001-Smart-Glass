@@ -8,6 +8,7 @@ var socketIO = require('socket.io');
 
 
 var { ProcessHands } = require('./gesture');
+var { FrameTrace } = require('./FrameTrace');
 var app = express()
     .use(express.static(path.join(__dirname, '../public')))
     .set('views', path.join(__dirname, 'views'))
@@ -72,7 +73,7 @@ io.sockets.on('connection', function (socket) {
 
         if (isTracing) {
             /*** Process Frame */
-            var processedFrame = TracedFrames(data);
+            var processedFrame = FrameTrace(data);
             /*** Emit processed frame to all clients */
             io.sockets.emit('c_fgFrame', processedFrame);
             /*** Reset Conditions */

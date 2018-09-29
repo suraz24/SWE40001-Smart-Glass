@@ -9,19 +9,28 @@ const blue = new cv.Vec(255, 0, 0);
 const green = new cv.Vec(0, 255, 0);
 const red = new cv.Vec(0, 0, 255);
 
-function FrameTrace(frame,Snapshot){ 
-//console.log("frame: ",frame);
+function FrameTrace(frame){ 
+console.log("frame: ",frame);
 //console.log("Snapshot: ",Snapshot);
 
 //cv.imshow('frame',combineFrames(frame,Snapshot));
+
+
+function base64toMat(base64) {
+	var split = base64.split(',')[1]
+	return cv.imdecode(Buffer.from(split, 'base64'));
+}
+
+var Snapshot = base64toMat('../s1.jpg');
 Snapshot = combineFrames(frame,Snapshot);
+//Snapshot= cv.imread('../s1.jpg',cv.IMREAD_COLOR);
 
     const delay = 20;
     var twoPointDistance;
         const drawParams = Object.assign(
             {},
             { color: green,thickness: 20},   //can change the thickness of the drawing  
-        )
+        );
 		var coodinates = GetTraceCoordinates(frame); //saves every point from the start to this array
 		if(coodinates != null)
 		{

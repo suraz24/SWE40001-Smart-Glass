@@ -6,8 +6,7 @@ const path = require('path');
 const PORT = process.env.PORT || 5000
 var socketIO = require('socket.io');
 
-
-var { ProcessHands } = require('./gesture');
+var { ProcessHands, Set_HSV } = require('./gesture');
 var { FrameTrace } = require('./FrameTrace');
 var app = express()
     .use(express.static(path.join(__dirname, '../public')))
@@ -46,8 +45,8 @@ io.sockets.on('connection', function (socket) {
      * Capture frame to @param iFrame, stop capturing while processing
      */
     socket.on('fgFrame', data => {
-        
-        if(!data) return;
+
+        if (!data) return;
 
         fg_count++;
         console.log("fgFrame recieved:", fg_count);
@@ -57,6 +56,7 @@ io.sockets.on('connection', function (socket) {
 
         isProcessing = true;
 
+        snapshot = data;
 
         if (isStreaming) {
             /*** Process Frame */
@@ -67,14 +67,15 @@ io.sockets.on('connection', function (socket) {
             isProcessing = false;
         }
         if (isTracing) {
-            
-                    console.log("STATE: isTracing");
-                    /*** Process Frame */
-                    var processedFrame = FrameTrace(data);
-                    /*** Emit processed frame to all clients */
-                    io.sockets.emit('fgFrame', processedFrame);
-                    /*** Reset Conditions */
-                    isProcessing = false;
+
+            console.log("STATE: isTracing");
+            /*** Process Frame */
+            // data = FrameTrace(data);
+
+            /*** Emit processed frame to all clients */
+            io.sockets.emit('fgFrame', data);
+            /*** Reset Conditions */
+            isProcessing = false;
         }
 
 
@@ -120,22 +121,14 @@ io.sockets.on('connection', function (socket) {
      * color selector settings
      */
     socket.on('admin_calibrate_hsv', data => {
-        hRaw = data[0];
-        sRaw = data[1];
-        vRaw = data[2];
-        console.log("admin_calibrate_hsv: hRaw - ", data[0], ",sRaw - ", data[1], ",vRaw - ", data[2]);
+        Set_HSV(data);
     })
 
     /**
      * Admin request snapshot(from instructor) from server
      */
-
     socket.on('admin_get_snapshot', () => {
-        if (latest_snapshot !== null) {
-            io.sockets.emit('admin_snapshot', latest_snapshot);
-        } else {
-            io.sockets.emit('admin_snapshot', false);
-        }
+        io.sockets.emit('snapshot', { isStreaming: isStreaming, isTracing: isTracing, snapshot: snapshot });
     })
 
 

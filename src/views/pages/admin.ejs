@@ -26,15 +26,15 @@
           var canvas = document.querySelector('#canvas');
           var calibrateImg = document.querySelector('#calibrateImg');
           var message = document.querySelector('#message');
+// <!-- 
+//           socket.on('admin_snapshot', data => {
+//                if (data) {
+//                     calibrateImg.src = data;
+//                } else {
+//                     message.innerHTML = "Error while getting snapshot";
+//                }
+//           }) -->
 
-          socket.on('admin_snapshot', data => {
-               if (data) {
-                    calibrateImg.src = data;
-               } else {
-                    message.innerHTML = "Error while getting snapshot";
-               }
-          })
-          
           calibrateBtn.addEventListener('click', () => {
                socket.emit('admin_get_snapshot');
           })
@@ -52,9 +52,14 @@
 
                var p = context.getImageData(x, y, 1, 1).data;
 
-               message.innerHTML = "RGB: " + p[0] +","+ p[1]+","+ p[2]+","+"HSV: " + rgbToHsv(p[0], p[1], p[2]).toString();
-			   socket.emit('admin_calibrate_hsv',rgbToHsv(p[0],p[1],p[2]));
+               message.innerHTML = "RGB: " + p[0] + "," + p[1] + "," + p[2] + "," + "HSV: " + rgbToHsv(p[0], p[1], p[2]).toString();
+               socket.emit('admin_calibrate_hsv', rgbToHsv(p[0], p[1], p[2]));
           })
+
+          socket.on('snapshot', data => {
+               message.innerHTML = data.isStreaming ? "Calibrating for Streaming" : data.isTracing ? "Calibrating for Sketching" : "No streams found";
+               calibrateImg.src = data.snapshot;
+          });
 
 
           function rgbToHsv(r, g, b) {

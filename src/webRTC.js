@@ -70,10 +70,10 @@ io.sockets.on('connection', function (socket) {
 
             console.log("STATE: isTracing");
             /*** Process Frame */
-            // data = FrameTrace(data);
+            processedFrame = FrameTrace(data);
 
             /*** Emit processed frame to all clients */
-            io.sockets.emit('fgFrame', data);
+            io.sockets.emit('fgFrame', processedFrame);
             /*** Reset Conditions */
             isProcessing = false;
         }

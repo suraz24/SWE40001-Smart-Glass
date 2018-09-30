@@ -49,7 +49,8 @@ const getObjectCenter = (contour) => {
 	xpt =  (xpt/(hullPoints.length)).toFixed(0)
 	ypt = (ypt/(hullPoints.length)).toFixed(0)
 	console.log("getObjectCenter: xpt - ", xpt, ", ypt - ",ypt);
-	return new cv.Point(xpt, ypt); // returns an array with the x and y cordinates 
+	return [xpt, ypt]; // returns an array with the x and y cordinates 
+	// return new cv.Point(xpt, ypt); // returns an array with the x and y cordinates 
 };
   
 const GetTraceCoordinates = (frame) => {

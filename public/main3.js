@@ -1,4 +1,4 @@
-/**
+ /**
  * 
  * @summary On Start
  * Once got user media(audio, video). Try to establish connection with server and the other peer
@@ -40,7 +40,7 @@
 var room = 'foo';
 var isChannelReady = false;
 var isInitiator = false;
-var isStarted = false
+var isStarted = false;
 var isConnected = false;
 
 var pc, remoteAudioStream, localAudioStream, remoteVideoStream, localVideoStream;
@@ -154,11 +154,12 @@ function notifySketching() {
 socket.on('do_sketching', data => {
     if (data) {
         if (my_role == ROLES.INSTRUCTOR) {
-            bgVideoPlayer.style.display = "none";
+            // bgVideoPlayer.style.display = "none";
             bgVideoPlayer.pause();
         } else if (my_role == ROLES.OPERATOR) {
-            localVideoPlayer.pause();
-            localVideoPlayer.style.display = "none";
+            // localVideoPlayer.pause();
+            bgVideoPlayer.pause();
+            // localVideoPlayer.style.display = "none";
         }
         CURRENT_STATE = STATE.SKETCHING;
     }
@@ -188,11 +189,11 @@ function notifyStreaming() {
 socket.on('do_streaming', data => {
     if (data) {
         if (my_role == ROLES.INSTRUCTOR) {
-            bgVideoPlayer.style.display = "block";
+            // bgVideoPlayer.style.display = "block";
             bgVideoPlayer.play();
         } else if (my_role == ROLES.OPERATOR) {
-            localVideoPlayer.play();
-            bgVideoPlayer.style.display = "block";
+            bgVideoPlayer.play();
+            // bgVideoPlayer.style.display = "block";
         }
         CURRENT_STATE = STATE.STREAMING;
     }
@@ -241,7 +242,6 @@ function streamVideoAs(role) {
 
         localVideoPlayer.play();
 
-
         sendFrameInterval = setInterval(() => sendFrame(localVideoPlayer), 150);
     }
     if (role == ROLES.OPERATOR) {
@@ -271,7 +271,12 @@ document.onkeypress = (e) => {
     console.log("Key presssed; Changing Role", e);
     // t (lower case) key
     if (e.charCode == 116) {
-        notifySketching();
+        if(CURRENT_STATE == STATE.SKETCHING) {
+            notifyStreaming();
+        } 
+        if(CURRENT_STATE == STATE.STREAMING){
+            notifySketching();
+        }
     }
     else {
         notifyChangeRole();

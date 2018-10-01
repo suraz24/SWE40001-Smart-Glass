@@ -118,12 +118,18 @@ io.sockets.on('connection', function (socket) {
     })
 
     /**
-     * color selector settings
+     * color selector settings for gesture calibration
      */
     socket.on('admin_calibrate_hsv', data => {
         Set_HSV_Gesture(data);
+    })
+	/**
+     * color selector settings for trace calibration
+     */
+	 socket.on('admin_calibrate_hsv_trace', data => {
 		Set_HSV_Trace(data);
     })
+	
 
     /**
      * Admin request snapshot(from instructor) from server

@@ -6,8 +6,8 @@ const path = require('path');
 const PORT = process.env.PORT || 5000
 var socketIO = require('socket.io');
 
-var { ProcessHands, Set_HSV } = require('./gesture');
-var { FrameTrace } = require('./FrameTrace');
+var { ProcessHands, Set_HSV_Gesture} = require('./gesture');
+var { FrameTrace,Set_HSV_Trace} = require('./FrameTrace');
 var app = express()
     .use(express.static(path.join(__dirname, '../public')))
     .set('views', path.join(__dirname, 'views'))
@@ -121,7 +121,8 @@ io.sockets.on('connection', function (socket) {
      * color selector settings
      */
     socket.on('admin_calibrate_hsv', data => {
-        Set_HSV(data);
+        Set_HSV_Gesture(data);
+		Set_HSV_Trace(data);
     })
 
     /**

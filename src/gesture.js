@@ -10,20 +10,16 @@ var lV = 0.05;
 var uH = 12;
 var uS = 0.8;
 var uV = 0.6;
+var variance = 0.3;
 
 
 const transparentPixel = cv.Vec4(0, 0, 0, 0);
 
 module.exports = {
 
-     Set_HSV(hsv) {
-          console.log("Setting HSV", hsv);
-          lH = hsv[0] * 0.6;
-          lS = hsv[1] * 0.6;
-          lV = hsv[2] * 0.6;
-          uH = hsv[0] * 1.3;
-          uS = hsv[1] * 1.3;
-          uV = hsv[2] * 1.3;
+     Set_HSV_Gesture(hsv) {
+          console.log("Setting HSV of Gestures", hsv);
+		  calibrateHSV(hsv);
      },
 
      ProcessHands: function (iFrame) {
@@ -65,13 +61,10 @@ function makeHandMask(img) {
 
      // filter by skin color
      const imgHLS = img.cvtColor(cv.COLOR_BGR2HLS);
-
-     const rangeMask = imgHLS.inRange(new cv.Vec(lH, lS * 255, lV * 255), new cv.Vec(uH, uS * 255, uV * 255));
-
+     const rangeMask = imgHLS.inRange(new cv.Vec(lH, lS, lV), new cv.Vec(uH, uS,uV));
      // remove noise
      const blurred = rangeMask.blur(new cv.Size(10, 10));
      const thresholded = blurred.threshold(200, 255, cv.THRESH_BINARY);
-
      return thresholded;
 
 };
@@ -86,4 +79,76 @@ function makeHandMask(img) {
 function base64toMat(base64) {
      var split = base64.split(',')[1]
      return cv.imdecode(Buffer.from(split, 'base64'));
+}
+
+
+/**
+ * calibrate the lower and upper HSV Values
+ * 
+ * @param {var hsv[3]} float hsv[3]
+ * @returns void
+ */
+function calibrateHSV(hsv){
+	//calibrate lower hue value
+	if(hsv[0] >= variance)
+	{
+		lH = (hsv[0] -variance)*180;
+		
+	}
+	else // hsv[0] < variance
+	{
+		lH = 0.00;
+	}
+	//calibrate lower saturation value
+	if(hsv[1] >= variance)
+	{
+		lS = (hsv[1] -variance)*255;
+	}
+	else //hsv[1] < variance
+	{
+		lS = 0.00;
+	}
+	//calibrate lower value value
+	if(hsv[2] >= variance)
+	{
+		lV = (hsv[2] - variance)*255;
+	}
+	else //hsv[2] < variance
+	{
+		lV = 0.00;
+	}
+	//calibrate upper hue value
+	if(hsv[0] <= (1 - variance))
+	{
+		uH = (hsv[0] + variance)*180;
+	}
+	else //hsv[0] > 1 - variance
+	{
+		uH = 1*180;
+	}
+	//calibrate upper saturation value
+	if(hsv[1] <= 1 - variance)
+	{
+		uS = (hsv[1] + variance)*255;
+	}
+	else  //hsv[1] > 1 - variance
+	{
+		uS = 1*255;
+	}
+	//calibrate upper value value
+	if(hsv[2] <=1 - variance)
+	{
+		uV = (hsv[2] + variance)*255;
+	}
+	else //hsv[2] > 1 - variance
+	{
+		uV = 1*255;
+	}
+	
+	console.log("lH - ",lH);
+	console.log("lS - ",lS);
+	console.log("lv - ",lV);
+	console.log("uH - ", uH);
+	console.log("uS - ", uS);
+	console.log("uV - ", uV);
 }

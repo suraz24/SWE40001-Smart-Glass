@@ -1,11 +1,18 @@
 const { cv } = require("./utils.js");
-const { GetTraceCoordinates } = require("./GetTraceCoordinates");
+const { GetTraceCoordinates,_Set_HSV_Trace } = require("./GetTraceCoordinates");
+
+var lH = 0;
+var lS = 0.1;
+var lV = 0.05;
+var uH = 12;
+var uS = 0.8;
+var uV = 0.6;
+var variance = 0.3;
 
 var snapshot = null;
-var coordinates = [];
+// var coordinates = [];
 
 module.exports = {
-<<<<<<< HEAD
 	/**
 	 * Draw on the @var snapshot, with coordinates extracted/drawn from current_frame
 	 * UPDATE @var snapshot to latest output from @function FrameTrace
@@ -13,36 +20,12 @@ module.exports = {
 	 */
 	FrameTrace: function (current_frame) {
 		current_frame = base64toMat(current_frame);
-		if (snapshot == null) {
-			snapshot = base64toMat(current_frame);
-		}
-		return snapshot.drawPolylines(coordinates, false);
-	}
 
-}
-=======
-  /**
-   * Draw on the @var snapshot, with coordinates extracted/drawn from current_frame
-   * UPDATE @var snapshot to latest output from @function FrameTrace
-   * @param {}
-   */
-  FrameTrace: function(current_frame) {
-    current_frame = base64toMat(current_frame);
-    if (snapshot == null) {
-      console.log("This is the first time");
-      snapshot = current_frame;
+		return GetTraceCoordinates(current_frame);
+	},
+	Set_HSV_Trace: function(hsv) {
+		_Set_HSV_Trace(hsv);
 	}
-
-	//get coord from current_frame (xy||xy array)
-    tempCoord = GetTraceCoordinates(current_frame);
-    if(tempCoord !== null) {
-    	coordinates.push(GetTraceCoordinates(current_frame));
-	}
->>>>>>> b13fd7b9b6f5924f03e582366fa9f47bcb16432a
-
-	//return the coordinates to the client
-	return coordinates;
-}
 };
 /**
  * Split base64 string, convert to Mat
@@ -51,11 +34,6 @@ module.exports = {
  * @returns {Mat} a Mat
  */
 function base64toMat(base64) {
-<<<<<<< HEAD
-	var split = base64.split(',')[1]
-	return cv.imdecode(Buffer.from(split, 'base64'));
-=======
-  var split = base64.split(",")[1];
-  return cv.imdecode(Buffer.from(split, "base64"));
->>>>>>> b13fd7b9b6f5924f03e582366fa9f47bcb16432a
+	var split = base64.split(",")[1];
+	return cv.imdecode(Buffer.from(split, "base64"));
 }

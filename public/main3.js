@@ -61,6 +61,8 @@ var my_role;
 var remoteAudioPlayer = document.querySelector('#remoteAudio'); // Audio from remote peer
 var localVideoPlayer = document.querySelector('#localVideo');
 var bgVideoPlayer = document.querySelector('#bgVideo'); // Background video, usually from operator
+var svg = document.querySelector('#sketch_svg'); // Background video, usually from operator
+var polyline = document.querySelector('#sketch_polyline'); // Background video, usually from operator
 var fgFrame = document.querySelector('#fgFrame'); // Foreground frame, usually from instructor
 var canvas = document.querySelector('#canvas'); // Canvas for capturing/drawing local video
 canvas.width = width;
@@ -289,6 +291,12 @@ document.onkeypress = (e) => {
  */
 socket.on('fgFrame', data => {
     console.log("FGFRAME: ", data);
+    if(CURRENT_STATE == STATE.SKETCHING && data !=null) {
+        var point = svg.createSVGPoint();
+        point.x = data[0];
+        point.y = data[1];
+        polyline.points.appendItem(point);
+    } 
     fgFrame.src = data
 });
 

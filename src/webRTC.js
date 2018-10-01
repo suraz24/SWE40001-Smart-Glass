@@ -6,8 +6,8 @@ const path = require('path');
 const PORT = process.env.PORT || 5000
 var socketIO = require('socket.io');
 
-var { ProcessHands, Set_HSV } = require('./gesture');
-var { FrameTrace } = require('./FrameTrace');
+var { ProcessHands, Set_HSV_Gesture} = require('./gesture');
+var { FrameTrace,Set_HSV_Trace} = require('./FrameTrace');
 var app = express()
     .use(express.static(path.join(__dirname, '../public')))
     .set('views', path.join(__dirname, 'views'))
@@ -70,10 +70,10 @@ io.sockets.on('connection', function (socket) {
 
             console.log("STATE: isTracing");
             /*** Process Frame */
-            // data = FrameTrace(data);
+            processedFrame = FrameTrace(data);
 
             /*** Emit processed frame to all clients */
-            io.sockets.emit('fgFrame', data);
+            io.sockets.emit('fgFrame', processedFrame);
             /*** Reset Conditions */
             isProcessing = false;
         }
@@ -118,11 +118,18 @@ io.sockets.on('connection', function (socket) {
     })
 
     /**
-     * color selector settings
+     * color selector settings for gesture calibration
      */
     socket.on('admin_calibrate_hsv', data => {
-        Set_HSV(data);
+        Set_HSV_Gesture(data);
     })
+	/**
+     * color selector settings for trace calibration
+     */
+	 socket.on('admin_calibrate_hsv_trace', data => {
+		Set_HSV_Trace(data);
+    })
+	
 
     /**
      * Admin request snapshot(from instructor) from server

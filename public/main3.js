@@ -272,7 +272,7 @@ function sendFrame(video) {
 document.onkeypress = (e) => {
     console.log("Key presssed; Changing Role", e);
     // t (lower case) key
-    if (e.charCode == 116) {
+    if (e.charCode == 0) {// button press on glasses
         if(CURRENT_STATE == STATE.SKETCHING) {
             notifyStreaming();
         } 
@@ -280,8 +280,13 @@ document.onkeypress = (e) => {
             notifySketching();
         }
     }
+	else if(e.charCode == 32) //space press - change roles
+	{
+		//Note: must be connected to a blue tooth keyboard to change roles
+		notifyChangeRole();
+	}
     else {
-        notifyChangeRole();
+		alert("button pressed - "+e.charCode); 
     }
 }
 

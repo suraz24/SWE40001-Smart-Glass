@@ -74,7 +74,7 @@ function makeHandMask(img) {
 	rangeMask = rangeMask.morphologyEx(kernelClose,cv.MORPH_CLOSE);
 	 // remove noise
 	 var blurred = rangeMask.blur(new cv.Size(10, 10));
-     const thresholded = blurred.threshold(190, 255, cv.THRESH_BINARY);
+     const thresholded = blurred.threshold(50, 255, cv.THRESH_BINARY);
 	 return thresholded;
 };
 

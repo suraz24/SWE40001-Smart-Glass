@@ -8,21 +8,32 @@ const { cv,skinColorUpperHSV,skinColorLowerHSV } = require('./utils');
 //var skinColorLowerSetting = skinColorLower(0);
 
 var lH = 0;
-var lS = 0.1;
-var lV = 0.05;
+var lS = 0.1*255;
+var lV = 0.05*255;
 var uH = 12;
-var uS = 0.8;
-var uV = 0.6;
-var variance = 0.3;
+var uS = 0.8*255;
+var uV = 0.6*255;
+
+var hueVariance = 0.03;
+var satVariance= 0.4;
+var valVariance = 0.275;
+
 
 const makeHandMask = (img) => {
-  // filter by skin color
-  const imgHLS = img.cvtColor(cv.COLOR_BGR2HLS);
-  const rangeMask = imgHLS.inRange(new cv.Vec(lH, lS, lV), new cv.Vec(uH, uS,uV));
-  // remove noise
-  const blurred = rangeMask.blur(new cv.Size(10, 10));
-  const thresholded = blurred.threshold(200, 255, cv.THRESH_BINARY);
-  return thresholded;
+	// Denoising the color 
+	 for(var i = 0; i < 2; i++){
+		img = img.blur(new cv.Size(2,2));
+	 }
+     // filter by skin color
+     const imgHLS = img.cvtColor(cv.COLOR_BGR2HLS);
+     var rangeMask = imgHLS.inRange(new cv.Vec(lH, 0*255, 0*255), new cv.Vec(uH, 1*255,1*255));  
+	 //close gaps
+	rangeMask = rangeMask.morphologyEx(kernel,cv.MORPH_OPEN);
+	rangeMask = rangeMask.morphologyEx(kernelClose,cv.MORPH_CLOSE);
+	 // remove noise
+	 var blurred = rangeMask.blur(new cv.Size(10, 10));
+     const thresholded = blurred.threshold(50, 255, cv.THRESH_BINARY);
+	 return thresholded;
 };
 
 const getHandContour = (handMask) => {
@@ -80,57 +91,57 @@ const GetTraceCoordinates = (frame) => {
  */
 function calibrateHSV(hsv){
 	//calibrate lower hue value
-	if(hsv[0] >= variance)
+	if(hsv[0] >= hueVariance)
 	{
-		lH = (hsv[0] -variance)*180;
+		lH = (hsv[0] - hueVariance)*180;
 		
 	}
-	else // hsv[0] < variance
+	else // hsv[0] < hueVariance
 	{
 		lH = 0.00;
 	}
 	//calibrate lower saturation value
-	if(hsv[1] >= variance)
+	if(hsv[1] >= satVariance)
 	{
-		lS = (hsv[1] -variance)*255;
+		lS = (hsv[1] -satVariance)*255;
 	}
-	else //hsv[1] < variance
+	else //hsv[1] < satVariance
 	{
 		lS = 0.00;
 	}
 	//calibrate lower value value
-	if(hsv[2] >= variance)
+	if(hsv[2] >= valVariance)
 	{
-		lV = (hsv[2] - variance)*255;
+		lV = (hsv[2] - valVariance)*255;
 	}
-	else //hsv[2] < variance
+	else //hsv[2] < valVariance
 	{
 		lV = 0.00;
 	}
 	//calibrate upper hue value
-	if(hsv[0] <= (1 - variance))
+	if(hsv[0] <= (1 - hueVariance))
 	{
-		uH = (hsv[0] + variance)*180;
+		uH = (hsv[0] + hueVariance)*180;
 	}
-	else //hsv[0] > 1 - variance
+	else //hsv[0] > 1 - hueVariance
 	{
 		uH = 1*180;
 	}
 	//calibrate upper saturation value
-	if(hsv[1] <= 1 - variance)
+	if(hsv[1] <= 1 - satVariance)
 	{
-		uS = (hsv[1] + variance)*255;
+		uS = (hsv[1] + satVariance)*255;
 	}
-	else  //hsv[1] > 1 - variance
+	else  //hsv[1] > 1 - satVariance
 	{
 		uS = 1*255;
 	}
 	//calibrate upper value value
-	if(hsv[2] <=1 - variance)
+	if(hsv[2] <=1 - valVariance)
 	{
-		uV = (hsv[2] + variance)*255;
+		uV = (hsv[2] + valVariance)*255;
 	}
-	else //hsv[2] > 1 - variance
+	else //hsv[2] > 1 - valVariance
 	{
 		uV = 1*255;
 	}

@@ -2,12 +2,15 @@ const { cv } = require("./utils.js");
 const { GetTraceCoordinates,_Set_HSV_Trace } = require("./GetTraceCoordinates");
 
 var lH = 0;
-var lS = 0.1;
-var lV = 0.05;
+var lS = 0.1*255;
+var lV = 0.05*255;
 var uH = 12;
-var uS = 0.8;
-var uV = 0.6;
-var variance = 0.3;
+var uS = 0.8*255;
+var uV = 0.6*255;
+
+var hueVariance = 0.03;
+var satVariance= 0.4;
+var valVariance = 0.275;
 
 var snapshot = null;
 // var coordinates = [];

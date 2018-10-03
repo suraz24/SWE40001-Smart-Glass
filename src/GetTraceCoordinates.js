@@ -15,8 +15,8 @@ var uS = 0.8*255;
 var uV = 0.6*255;
 
 var hueVariance = 0.03;
-var satVariance= 0.4;
-var valVariance = 0.275;
+var satVariance= 0.9;
+var valVariance = 0.9;
 
 const kernel = new cv.Mat(2,2,cv.CV_8U,1); //ones 5X5 kernel 
 const kernelClose = new cv.Mat(3,3,cv.CV_8U,1);//ones 20x20 kernel
@@ -28,14 +28,16 @@ const makeHandMask = (img) => {
 	 }
      // filter by skin color
      const imgHLS = img.cvtColor(cv.COLOR_BGR2HLS);
-     var rangeMask = imgHLS.inRange(new cv.Vec(lH, 0*255, 0*255), new cv.Vec(uH, 1*255,1*255));  
+     var rangeMask = imgHLS.inRange(new cv.Vec(lH, lS,lV), new cv.Vec(uH, uS,uV));  
 	 //close gaps
 	rangeMask = rangeMask.morphologyEx(kernel,cv.MORPH_OPEN);
 	rangeMask = rangeMask.morphologyEx(kernelClose,cv.MORPH_CLOSE);
 	 // remove noise
 	 var blurred = rangeMask.blur(new cv.Size(10, 10));
-     const thresholded = blurred.threshold(50, 255, cv.THRESH_BINARY);
-	 return thresholded;
+     const thresholded = blurred.threshold(75, 255, cv.THRESH_BINARY);
+	cv.imshow('getTraceCoordinates',thresholded);
+	cv.waitKey(2);
+	return thresholded;
 };
 
 const getHandContour = (handMask) => {

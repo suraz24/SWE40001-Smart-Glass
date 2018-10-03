@@ -305,6 +305,7 @@ socket.on('fgFrame', data => {
 		//svg.rect(100,100).animate().fill('#f03').move(100,100);
 		var _xRelative = (data[0]/width)*window.screen.width;
 		var _yRelative = (data[1]/height)*window.screen.height;
+		_xRelative = (window.screen.width)-_xRelative; //opposite direction
         point.x = _xRelative;
         point.y = _yRelative;
 		point2.x = _xRelative + 20;

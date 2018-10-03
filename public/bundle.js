@@ -64,6 +64,7 @@ var localVideoPlayer = document.querySelector('#localVideo');
 var bgVideoPlayer = document.querySelector('#bgVideo'); // Background video, usually from operator
 var svg = document.querySelector('#sketch_svg'); // Background video, usually from operator
 var polyline = document.querySelector('#sketch_polyline'); // Background video, usually from operator
+var pointer = document.querySelector('#sketch_pointer'); // Background video, usually from operator
 var fgFrame = document.querySelector('#fgFrame'); // Foreground frame, usually from instructor
 var canvas = document.querySelector('#canvas'); // Canvas for capturing/drawing local video
 canvas.width = width;
@@ -273,7 +274,7 @@ function sendFrame(video) {
 document.onkeypress = (e) => {
     console.log("Key presssed; Changing Role", e);
     // t (lower case) key
-    if (e.charCode == 0) {// button press on glasses
+    if (e.charCode == 0 || e.charCode == 116) {// button press on glasses or 't' on keyboard
         if(CURRENT_STATE == STATE.SKETCHING) {
             notifyStreaming();
         } 
@@ -287,8 +288,9 @@ document.onkeypress = (e) => {
 		notifyChangeRole();
 	}
     else {
-		alert("button pressed - "+e.charCode); 
+		alert("button pressed - "+e.code); 
     }
+	
 }
 
 
@@ -297,12 +299,27 @@ document.onkeypress = (e) => {
  */
 socket.on('fgFrame', data => {
     console.log("FGFRAME: ", data);
-    if(CURRENT_STATE == STATE.SKETCHING && data !=null) {
-        var point = svg.createSVGPoint();
-        point.x = data[0];
-        point.y = data[1];
+    if(CURRENT_STATE == STATE.SKETCHING && data !=null) { 
+		pointer.points.clear();
+		var point = svg.createSVGPoint();
+		var point2 = svg.createSVGPoint();
+		//svg.rect(100,100).animate().fill('#f03').move(100,100);
+		var _xRelative = (data[0]/width)*window.screen.width;
+		var _yRelative = (data[1]/height)*window.screen.height;
+        point.x = _xRelative;
+        point.y = _yRelative;
+		point2.x = _xRelative + 20;
+		point2.y = _yRelative + 20;
+		console.log("x: " + point.x + "y: " + point.y);
+		pointer.points.appendItem(point);
+		pointer.points.appendItem(point2);
         polyline.points.appendItem(point);
     } 
+	else if(CURRENT_STATE == STATE.STREAMING)
+	{
+		pointer.points.clear();
+		polyline.points.clear();
+	}
     fgFrame.src = data
 });
 

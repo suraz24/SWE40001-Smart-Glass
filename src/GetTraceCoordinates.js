@@ -18,6 +18,8 @@ var hueVariance = 0.03;
 var satVariance= 0.4;
 var valVariance = 0.275;
 
+const kernel = new cv.Mat(2,2,cv.CV_8U,1); //ones 5X5 kernel 
+const kernelClose = new cv.Mat(3,3,cv.CV_8U,1);//ones 20x20 kernel
 
 const makeHandMask = (img) => {
 	// Denoising the color 

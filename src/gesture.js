@@ -11,9 +11,9 @@ var uH = 12;
 var uS = 0.8*255;
 var uV = 0.6*255;
 
-var hueVariance = 0.03;
-var satVariance= 0.4;
-var valVariance = 0.275;
+var hueVariance = 0.07;
+var satVariance= 0.9;
+var valVariance = 0.9;
 
 
 const transparentPixel = cv.Vec4(0, 0, 0, 0);
@@ -64,17 +64,18 @@ const kernelClose = new cv.Mat(3,3,cv.CV_8U,1);//ones 20x20 kernel
 function makeHandMask(img) {
 	 // Denoising the color 
 	 for(var i = 0; i < 2; i++){
-		img = img.blur(new cv.Size(2,2));
+		img = img.blur(new cv.Size(10,10));
 	 }
      // filter by skin color
      const imgHLS = img.cvtColor(cv.COLOR_BGR2HLS);
-     var rangeMask = imgHLS.inRange(new cv.Vec(lH, 0*255, 0*255), new cv.Vec(uH, 1*255,1*255));  
+     var rangeMask = imgHLS.inRange(new cv.Vec(lH,lS,lV), new cv.Vec(uH, uS,uV));  
 	 //close gaps
 	rangeMask = rangeMask.morphologyEx(kernel,cv.MORPH_OPEN);
 	rangeMask = rangeMask.morphologyEx(kernelClose,cv.MORPH_CLOSE);
+	//rangeMask = rangeMask.dilate(new cv.Mat([[1, 1],[1, 1]], cv.CV_8U), new cv.Vec(-1, -1), 2);
 	 // remove noise
 	 var blurred = rangeMask.blur(new cv.Size(10, 10));
-     const thresholded = blurred.threshold(50, 255, cv.THRESH_BINARY);
+     const thresholded = blurred.threshold(75, 255, cv.THRESH_BINARY);
 	 return thresholded;
 };
 

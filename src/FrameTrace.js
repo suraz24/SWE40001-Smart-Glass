@@ -23,7 +23,6 @@ module.exports = {
 	 */
 	FrameTrace: function (current_frame) {
 		current_frame = base64toMat(current_frame);
-
 		return GetTraceCoordinates(current_frame);
 	},
 	Set_HSV_Trace: function(hsv) {

@@ -300,6 +300,7 @@ document.onkeypress = (e) => {
 socket.on('fgFrame', data => {
     console.log("FGFRAME: ", data);
     if(CURRENT_STATE == STATE.SKETCHING && data !=null) { 
+		console.log("SKETCHING!!");
 		pointer.points.clear();
 		var point = svg.createSVGPoint();
 		var point2 = svg.createSVGPoint();
@@ -316,12 +317,14 @@ socket.on('fgFrame', data => {
 		pointer.points.appendItem(point2);
         polyline.points.appendItem(point);
     } 
-	else if(CURRENT_STATE == STATE.STREAMING)
+	
+	if(CURRENT_STATE == STATE.STREAMING)
 	{
+		console.log("STREAMING!!");
 		pointer.points.clear();
 		polyline.points.clear();
+		fgFrame.src = data;
 	}
-    fgFrame.src = data
 });
 
 socket.on('created', function (room) {

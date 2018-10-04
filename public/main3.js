@@ -1,39 +1,39 @@
- /**
- * 
- * @summary On Start
- * Once got user media(audio, video). Try to establish connection with server and the other peer
- * 
- * Connection initiator becomes Instrutor automatically, the other peer becomes Operator
- * 
- * Audio from both peers are streamed to each other regardless of roles via p2p
- * Video from both peers are streamed to each other regardless of roles via p2p
- * 
- * Roles determines whether remote/local video to display
- * Operator displays local video stream(from self)
- * Instructor displays remote video stream(from operator)
- * Instructor's Frames are captured and processed
- * 
- * Processed frames are sent to both users by server
- *
- * 
- * @summary On switch roles
- * When any of the two users press buttons to switch roles, both users switch roles
- * 
- * Operator plays remote video stream 
- * Operator becomes Instructor^
- * Instructor^ start sending frames to server
- * 
- * Instructor plays local video stream
- * Instructor becomes Operator^
- * Instructor^ stop sendng frames
- * 
- * 
- * @summary On taking snapshot
- * 
- * 
- * 
- * 
- */
+/**
+* 
+* @summary On Start
+* Once got user media(audio, video). Try to establish connection with server and the other peer
+* 
+* Connection initiator becomes Instrutor automatically, the other peer becomes Operator
+* 
+* Audio from both peers are streamed to each other regardless of roles via p2p
+* Video from both peers are streamed to each other regardless of roles via p2p
+* 
+* Roles determines whether remote/local video to display
+* Operator displays local video stream(from self)
+* Instructor displays remote video stream(from operator)
+* Instructor's Frames are captured and processed
+* 
+* Processed frames are sent to both users by server
+*
+* 
+* @summary On switch roles
+* When any of the two users press buttons to switch roles, both users switch roles
+* 
+* Operator plays remote video stream 
+* Operator becomes Instructor^
+* Instructor^ start sending frames to server
+* 
+* Instructor plays local video stream
+* Instructor becomes Operator^
+* Instructor^ stop sendng frames
+* 
+* 
+* @summary On taking snapshot
+* 
+* 
+* 
+* 
+*/
 
 'use strict';
 
@@ -51,7 +51,7 @@ var height = 68;
 
 const ROLES = { INSTRUCTOR: "INSTRUCTOR", OPERATOR: "OPERATOR" };
 
-const STATE = { STREAMING : "STREAMING", SKETCHING: "SKETCHING" };
+const STATE = { STREAMING: "STREAMING", SKETCHING: "SKETCHING" };
 
 var CURRENT_STATE = null;
 
@@ -72,14 +72,12 @@ var context = canvas.getContext('2d');
 
 var lastFrame = null;
 
-
 /** Set up Media from device */
 navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream => {
     // Audio stream from local device
     localAudioStream = stream;
 
-    navigator.mediaDevices.getUserMedia({ audio: false, video: { width: width * 2, height: height * 2, frameRate: 10 } }).then(stream => {
-
+    navigator.mediaDevices.getUserMedia({ audio: false, video: true }).then(stream => {
 
         // // Video stream from local device
         localVideoStream = stream;
@@ -271,25 +269,25 @@ function sendFrame(video) {
  * @description send the role to the other peer if connected
  */
 document.onkeypress = (e) => {
-    console.log("Key presssed; Changing Role", e);
+    // console.log("Key presssed; Changing Role", e);
     // t (lower case) key
-    if (e.charCode == 0 || e.charCode == 116) {// button press on glasses or 't' on keyboard
-        if(CURRENT_STATE == STATE.SKETCHING) {
+    if (e.charCode == 0 || e.charCode == 116) { // button press on glasses or 't' on keyboard
+        if (CURRENT_STATE == STATE.SKETCHING) {
             notifyStreaming();
-        } 
-        if(CURRENT_STATE == STATE.STREAMING){
+        }
+        if (CURRENT_STATE == STATE.STREAMING) {
             notifySketching();
         }
     }
-	else if(e.charCode == 32) //space press - change roles
-	{
-		//Note: must be connected to a blue tooth keyboard to change roles
-		notifyChangeRole();
-	}
-    else {
-		alert("button pressed - "+e.code); 
+    // space press - change roles
+    else if (e.charCode == 32) {
+        //Note: must be connected to a blue tooth keyboard to change roles
+        notifyChangeRole();
     }
-	
+    else {
+        alert("button pressed - " + JSON.stringify(e));
+    }
+
 }
 
 
@@ -298,32 +296,31 @@ document.onkeypress = (e) => {
  */
 socket.on('fgFrame', data => {
     console.log("FGFRAME: ", data);
-    if(CURRENT_STATE == STATE.SKETCHING && data !=null) { 
-		console.log("SKETCHING!!");
-		pointer.points.clear();
-		var point = svg.createSVGPoint();
-		var point2 = svg.createSVGPoint();
-		//svg.rect(100,100).animate().fill('#f03').move(100,100);
-		var _xRelative = (data[0]/width)*window.screen.width;
-		var _yRelative = (data[1]/height)*window.screen.height;
-		_xRelative = (window.screen.width)-_xRelative; //opposite direction
+    if (CURRENT_STATE == STATE.SKETCHING && data != null) {
+        console.log("SKETCHING!!");
+        pointer.points.clear();
+        var point = svg.createSVGPoint();
+        var point2 = svg.createSVGPoint();
+        //svg.rect(100,100).animate().fill('#f03').move(100,100);
+        var _xRelative = (data[0] / width) * window.screen.width;
+        var _yRelative = (data[1] / height) * window.screen.height;
+        _xRelative = (window.screen.width) - _xRelative; //opposite direction
         point.x = _xRelative;
         point.y = _yRelative;
-		point2.x = _xRelative + 20;
-		point2.y = _yRelative + 20;
-		console.log("x: " + point.x + "y: " + point.y);
-		pointer.points.appendItem(point);
-		pointer.points.appendItem(point2);
+        point2.x = _xRelative + 20;
+        point2.y = _yRelative + 20;
+        console.log("x: " + point.x + "y: " + point.y);
+        pointer.points.appendItem(point);
+        pointer.points.appendItem(point2);
         polyline.points.appendItem(point);
-    } 
-	
-	if(CURRENT_STATE == STATE.STREAMING)
-	{
-		console.log("STREAMING!!");
-		pointer.points.clear();
-		polyline.points.clear();
-		fgFrame.src = data;
-	}
+    }
+
+    if (CURRENT_STATE == STATE.STREAMING) {
+        console.log("STREAMING!!");
+        pointer.points.clear();
+        polyline.points.clear();
+        fgFrame.src = data;
+    }
 });
 
 socket.on('created', function (room) {

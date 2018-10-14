@@ -60,17 +60,21 @@ var my_role;
 
 var remoteAudioPlayer = document.querySelector('#remoteAudio'); // Audio from remote peer
 var localVideoPlayer = document.querySelector('#localVideo');
+var overlay = document.querySelector('#overlay');
+var input = document.querySelector('#input');
 var bgVideoPlayer = document.querySelector('#bgVideo'); // Background video, usually from operator
 var svg = document.querySelector('#sketch_svg'); // Background video, usually from operator
 var polyline = document.querySelector('#sketch_polyline'); // Background video, usually from operator
 var pointer = document.querySelector('#sketch_pointer'); // Background video, usually from operator
 var fgFrame = document.querySelector('#fgFrame'); // Foreground frame, usually from instructor
 var canvas = document.querySelector('#canvas'); // Canvas for capturing/drawing local video
+var inputBox = document.querySelector('#inputBox'); // Canvas for capturing/drawing local video
 canvas.width = width;
 canvas.height = height;
 var context = canvas.getContext('2d');
 
 var lastFrame = null;
+
 
 /** Set up Media from device */
 navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream => {
@@ -265,27 +269,30 @@ function sendFrame(video) {
     socket.emit('fgFrame', canvas.toDataURL());
 }
 
+input.addEventListener('oninput', e => {
+    print("INPUT", e, input);
+    // print(input);
+})
+
 /**
  * @description send the role to the other peer if connected
  */
 document.onkeypress = (e) => {
-    // console.log("Key presssed; Changing Role", e);
+    console.log("Key presssed; Changing Role", e);
     // t (lower case) key
     if (e.charCode == 0 || e.charCode == 116) { // button press on glasses or 't' on keyboard
         if (CURRENT_STATE == STATE.SKETCHING) {
             notifyStreaming();
+            return;
         }
         if (CURRENT_STATE == STATE.STREAMING) {
             notifySketching();
+            return;
         }
     }
-    // space press - change roles
-    else if (e.charCode == 32) {
-        //Note: must be connected to a blue tooth keyboard to change roles
-        notifyChangeRole();
-    }
     else {
-        alert("button pressed - " + JSON.stringify(e));
+        notifyChangeRole();
+        return;
     }
 
 }
@@ -319,6 +326,7 @@ socket.on('fgFrame', data => {
         console.log("STREAMING!!");
         pointer.points.clear();
         polyline.points.clear();
+        // overlay.style.back
         fgFrame.src = data;
     }
 });

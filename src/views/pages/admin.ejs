@@ -11,7 +11,9 @@
 
      <canvas id="canvas" style="display:none;"></canvas>
      <button type="button" id="calibrateBtn">Calibrate Hand Color</button>
-	 <button type="button" id="calibrateBtnTrace">Calibrate Trace Pointer Color</button>
+     <button type="button" id="calibrateBtnTrace">Calibrate Trace Pointer Color</button>
+
+     <button type="button" id="toggleModeBtn">Do Streaming</button>
 
      <img id="calibrateImg" style="width:300px; height:300px; border: 1px solid red">
 
@@ -21,32 +23,38 @@
      <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
 
      <script>
-		  var calibrateGesture = true; // if calibrateGesture = true, calibrate gesture, else, calibrate trace
+          var calibrateGesture = true; // if calibrateGesture = true, calibrate gesture, else, calibrate trace
           var socket = io.connect({ reconnection: false });
 
           var calibrateBtn = document.querySelector('#calibrateBtn');
-		  var calibrateBtnTrace = document.querySelector('#calibrateBtnTrace');
+          var toggleModeBtn = document.querySelector('#toggleModeBtn');
+          var calibrateBtnTrace = document.querySelector('#calibrateBtnTrace');
           var canvas = document.querySelector('#canvas');
           var calibrateImg = document.querySelector('#calibrateImg');
           var message = document.querySelector('#message');
-// <!-- 
-//           socket.on('admin_snapshot', data => {
-//                if (data) {
-//                     calibrateImg.src = data;
-//                } else {
-//                     message.innerHTML = "Error while getting snapshot";
-//                }
-//           }) -->
+          var isStreaming = true;
 
           calibrateBtn.addEventListener('click', () => {
                socket.emit('admin_get_snapshot');
-			   calibrateGesture = true;
+               calibrateGesture = true;
           })
-		  
-		  calibrateBtnTrace.addEventListener('click', () => {
-				socket.emit('admin_get_snapshot');
-				calibrateGesture = false;
-		  })
+
+          calibrateBtnTrace.addEventListener('click', () => {
+               socket.emit('admin_get_snapshot');
+               calibrateGesture = false;
+          })
+
+          toggleModeBtn.addEventListener('click', () => {
+               if (isStreaming) {
+                    socket.emit('notify_sketching');
+                    toggleModeBtn.innerHTML = "Switch to Streaming";
+               } else {
+                    socket.emit('notify_streaming');
+                    toggleModeBtn.innerHTML = "Switch to Sketching";
+               }
+               isStreaming = !isStreaming;
+          })
+
 
           calibrateImg.addEventListener('click', (e) => {
                console.log(e);
@@ -62,14 +70,14 @@
                var p = context.getImageData(x, y, 1, 1).data;
 
                message.innerHTML = "RGB: " + p[0] + "," + p[1] + "," + p[2] + "," + "HSV: " + rgbToHsv(p[0], p[1], p[2]).toString();
-               if(calibrateGesture == true) // calibrate gesture color
-			   {
-				socket.emit('admin_calibrate_hsv', rgbToHsv(p[0], p[1], p[2]));
-			   }
-			   else //calibrate trace color
-			   {
-				 socket.emit('admin_calibrate_hsv_trace',rgbToHsv(p[0], p[1], p[2]));
-			   }
+               if (calibrateGesture == true) // calibrate gesture color
+               {
+                    socket.emit('admin_calibrate_hsv', rgbToHsv(p[0], p[1], p[2]));
+               }
+               else //calibrate trace color
+               {
+                    socket.emit('admin_calibrate_hsv_trace', rgbToHsv(p[0], p[1], p[2]));
+               }
           })
 
           socket.on('snapshot', data => {

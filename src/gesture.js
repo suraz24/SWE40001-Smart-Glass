@@ -46,16 +46,50 @@ module.exports = {
 function grabHand(handFrame) {
 	let src = handFrame;
 	src = src.cvtColor(cv.COLOR_RGB2RGBA);
-	const handMask = makeHandMask(src);
-
-	for (let i = 0; i < handMask.rows; i++) {
-		for (let j = 0; j < handMask.cols; j++) {
-			if (handMask.at(i, j) == 0) {
-				src.set(i, j, transparentPixel);
-			}
-		}
-	}
+	const handMask = makeHandMask(src);	
+	processHandMaskRow(handMask,src);
 	return src;
+}
+
+/**
+ * setting up to see whether handMask pixel at i and j is a transparent pixel
+ * process every column per row for transparency pixels
+ * @param {Mat handMask} thresholded matrix to be compared with src for transparency
+ * @param {Mat src} original image
+ * @return void
+ */
+
+function processHandMaskRow(handMask,src)
+{
+	for (let i = 0; i < handMask.rows; i++) {
+		processHandMaskColumn(handMask,i,src);
+	}	
+}
+/**
+ * process column given current row for transparency
+ * @param {Mat handMask} thresholded matrix to be compared with src for transparency
+ * @param {int i} row in matrix
+ * @param {Mat src} original image
+ * @return void
+ */
+function processHandMaskColumn(handMask,i,src)
+{
+	for (let j = 0; j < handMask.cols; j++) {
+			setTransparentPixelZero(handMask,i,j,src);			
+	}	
+}
+/**
+ * set pixel transparency
+ * @param {Mat handMask} thresholded matrix to be compared with src for transparency
+ * @param {int i,j} row and column in a matrix
+ * @param {Mat src} original image
+ * @return void
+ */
+function setTransparentPixelZero(handMask,i,j,src)
+{
+	if (handMask.at(i, j) == 0) {
+		src.set(i, j, transparentPixel);
+	}	
 }
 
 const kernel = new cv.Mat(2, 2, cv.CV_8U, 1); //ones 5X5 kernel 

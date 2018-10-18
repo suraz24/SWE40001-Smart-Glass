@@ -96,19 +96,22 @@ const kernel = new cv.Mat(2, 2, cv.CV_8U, 1); //ones 5X5 kernel
 const kernelClose = new cv.Mat(3, 3, cv.CV_8U, 1);//ones 20x20 kernel
 
 function makeHandMask(img) {
-	// Denoising the color 
-	for (var i = 0; i < 2; i++) {
-		img = img.blur(new cv.Size(10, 10));
-	}
+	colorDenoising(img); // Denoising the color
 	// filter by skin color
 	const imgHLS = img.cvtColor(cv.COLOR_BGR2HLS);
-	var rangeMask = imgHLS.inRange(new cv.Vec(lH, lS, lV), new cv.Vec(uH, uS, uV));
+	var rangeMask = imgHLS.inRange(new cv.Vec(lH, lS, lV), new cv.Vec(uH, uS, uV))
 	// remove noise
 	var blurred = rangeMask.blur(new cv.Size(5, 5));
-	const thresholded = blurred.threshold(240, 255, cv.THRESH_BINARY);
-	return thresholded;
+	const thresholded = blurred.threshold(240, 255, cv.THRESH_BINARY); 
+ 	return thresholded;
 };
 
+function colorDenoising(img)
+{
+	for (var i = 0; i < 2; i++) {
+		img = img.blur(new cv.Size(10, 10));
+	}	
+}
 
 /**
  * Split base64 string, convert to Mat

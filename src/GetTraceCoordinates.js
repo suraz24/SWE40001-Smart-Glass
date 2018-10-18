@@ -56,9 +56,12 @@ const getObjectCenter = (contour) => {
 		pt: contourPoints[idx],
 		contourIdx: idx
 	}));
-	const hullPoints = hullPointsWithIdx.map(ptWithIdx => ptWithIdx.pt);
-
-  // get the x and y values of the center of the object 
+	const hullPoints = hullPointsWithIdx.map(ptWithIdx => ptWithIdx.pt);	
+	getCoordinatesXY(xpt,ypt); //call function getCoordinatesXY
+};
+ 
+function getCoordinatesXY(xpt,ypt)
+{
 	var xpt = 0;		//contains the x cordinates
 	var ypt = 0		// contains the y cordinates
 	for (var i=0;i<hullPoints.length;i++) {
@@ -70,7 +73,7 @@ const getObjectCenter = (contour) => {
 	console.log("getObjectCenter: xpt - ", xpt, ", ypt - ",ypt);
 	return [xpt, ypt]; // returns an array with the x and y cordinates 
 	// return new cv.Point(xpt, ypt); // returns an array with the x and y cordinates 
-};
+}
   
 const GetTraceCoordinates = (frame) => {
 	//console.log("GetTraceCoordinates - frame: ", frame);

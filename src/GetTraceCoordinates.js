@@ -35,8 +35,6 @@ const makeHandMask = (img) => {
 	 // remove noise
 	 var blurred = rangeMask.blur(new cv.Size(10, 10));
      const thresholded = blurred.threshold(75, 255, cv.THRESH_BINARY);
-	cv.imshow('getTraceCoordinates',thresholded);
-	cv.waitKey(2);
 	return thresholded;
 };
 
@@ -69,16 +67,11 @@ const getObjectCenter = (contour) => {
 	ypt = (ypt/(hullPoints.length)).toFixed(0)
 	console.log("getObjectCenter: xpt - ", xpt, ", ypt - ",ypt);
 	return [xpt, ypt]; // returns an array with the x and y cordinates 
-	// return new cv.Point(xpt, ypt); // returns an array with the x and y cordinates 
 };
   
 const GetTraceCoordinates = (frame) => {
-	//console.log("GetTraceCoordinates - frame: ", frame);
-	//console.log("frame type: ", typeof(frame));
-	// const resizedImg = frame.resizeToMax(640);
 	const handMask = makeHandMask(frame);
 	const handContour = getHandContour(handMask);
-	//cv.imshow('handContour',handContour);
 	if (!handContour) {
 		return null;
 	}

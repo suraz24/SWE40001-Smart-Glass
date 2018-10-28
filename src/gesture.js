@@ -145,10 +145,10 @@ function calibrateHSV(hsv) {
 		uV = 1 * 255;
 	}
 
-	console.log("lH - ", lH);
-	console.log("lS - ", lS);
-	console.log("lv - ", lV);
-	console.log("uH - ", uH);
-	console.log("uS - ", uS);
-	console.log("uV - ", uV);
+	// console.log("lH - ", lH);
+	// console.log("lS - ", lS);
+	// console.log("lv - ", lV);
+	// console.log("uH - ", uH);
+	// console.log("uS - ", uS);
+	// console.log("uV - ", uV);
 }

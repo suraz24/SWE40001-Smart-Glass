@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+     <title>SGBRGS Admin</title>
+
+</head>
+
+<body>
+
+     <canvas id="canvas" style="display:none;"></canvas>
+     <button type="button" id="calibrateBtn">Calibrate Hand Color</button>
+     <button type="button" id="calibrateBtnTrace">Calibrate Trace Pointer Color</button>
+
+     <button type="button" id="toggleModeBtn">Do Streaming</button>
+
+     <img id="calibrateImg" style="width:300px; height:300px; border: 1px solid red">
+
+     <div id="message"></div>
+
+     <script src="/socket.io/socket.io.js"></script>
+     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+
+     <script>
+          var calibrateGesture = true; // if calibrateGesture = true, calibrate gesture, else, calibrate trace
+          var socket = io.connect({ reconnection: false });
+
+          var calibrateBtn = document.querySelector('#calibrateBtn');
+          var toggleModeBtn = document.querySelector('#toggleModeBtn');
+          var calibrateBtnTrace = document.querySelector('#calibrateBtnTrace');
+          var canvas = document.querySelector('#canvas');
+          var calibrateImg = document.querySelector('#calibrateImg');
+          var message = document.querySelector('#message');
+          var isStreaming = true;
+
+          calibrateBtn.addEventListener('click', () => {
+               socket.emit('admin_get_snapshot');
+               calibrateGesture = true;
+          })
+
+          calibrateBtnTrace.addEventListener('click', () => {
+               socket.emit('admin_get_snapshot');
+               calibrateGesture = false;
+          })
+
+          toggleModeBtn.addEventListener('click', () => {
+               if (isStreaming) {
+                    socket.emit('notify_sketching');
+                    toggleModeBtn.innerHTML = "Switch to Streaming";
+               } else {
+                    socket.emit('notify_streaming');
+                    toggleModeBtn.innerHTML = "Switch to Sketching";
+               }
+               isStreaming = !isStreaming;
+          })
+
+
+          calibrateImg.addEventListener('click', (e) => {
+               console.log(e);
+               var x = e.offsetX;
+               var y = e.offsetY;
+
+               canvas.width = calibrateImg.width;
+               canvas.height = calibrateImg.height;
+               var context = canvas.getContext('2d');
+
+               context.drawImage(calibrateImg, 0, 0, calibrateImg.width, calibrateImg.height);
+
+               var p = context.getImageData(x, y, 1, 1).data;
+
+               message.innerHTML = "RGB: " + p[0] + "," + p[1] + "," + p[2] + "," + "HSV: " + rgbToHsv(p[0], p[1], p[2]).toString();
+               if (calibrateGesture == true) // calibrate gesture color
+               {
+                    socket.emit('admin_calibrate_hsv', rgbToHsv(p[0], p[1], p[2]));
+               }
+               else //calibrate trace color
+               {
+                    socket.emit('admin_calibrate_hsv_trace', rgbToHsv(p[0], p[1], p[2]));
+               }
+          })
+
+          socket.on('snapshot', data => {
+               message.innerHTML = data.isStreaming ? "Calibrating for Streaming" : data.isTracing ? "Calibrating for Sketching" : "No streams found";
+               calibrateImg.src = data.snapshot;
+          });
+
+
+          function rgbToHsv(r, g, b) {
+               r /= 255, g /= 255, b /= 255;
+
+               var max = Math.max(r, g, b), min = Math.min(r, g, b);
+               var h, s, v = max;
+
+               var d = max - min;
+               s = max == 0 ? 0 : d / max;
+
+               if (max == min) {
+                    h = 0; // achromatic
+               } else {
+                    switch (max) {
+                         case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                         case g: h = (b - r) / d + 2; break;
+                         case b: h = (r - g) / d + 4; break;
+                    }
+
+                    h /= 6;
+               }
+
+               return [h, s, v];
+          }
+
+
+
+          // useCanvas(canvas, img, function () {
+          //      var p = canvas.getContext('2d')
+          //           .getImageData(x, y, 1, 1).data;
+          //      result.innerHTML = '<span>HEX: ' + rgbToHex(p[0], p[1], p[2]) + '</span>' +
+          //      '<span>RGB:  rgb(' +
+          //      p[0] + ',' +
+          //      p[1] + ',' +
+          //      p[2] + ')</span>';
+
+          //      document.body.style.background = rgbToHex(p[0], p[1], p[2]);
+          // }
+
+
+          // function update(picker) {
+          //      document.getElementById('hex-str').innerHTML = picker.toHEXString();
+          //      document.getElementById('rgb-str').innerHTML = picker.toRGBString();
+
+          //      document.getElementById('rgb').innerHTML =
+          //           Math.round(picker.rgb[0]) + ', ' +
+          //           Math.round(picker.rgb[1]) + ', ' +
+          //           Math.round(picker.rgb[2]);
+
+          //      document.getElementById('hsv').innerHTML =
+          //           Math.round(picker.hsv[0]) + '&deg;, ' +
+          //           Math.round(picker.hsv[1]) + '%, ' +
+          //           Math.round(picker.hsv[2]) + '%';
+          // }
+
+
+
+     </script>
+</body>
+
+</html>

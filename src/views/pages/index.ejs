@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <title>SGBRGS</title>
+
+</head>
+
+<body style="background-color: black;">
+
+  <h1 style="position:absolute; z-index: 10000; color: red;" id="role">SGBRGS</h1>
+
+  <div style="display: none;">
+    <span>cvFrame</span>
+    <img id="cvFrame">
+
+    <span>Canvas(Local)</span>
+    <canvas id="canvas"></canvas>
+
+    <span>Video(Local)</span>
+    <video id="localVideo"></video>
+
+    <audio id="remoteAudio" controls autoplay></audio>
+    <input type="text" id="input" autofocus>
+  </div>
+
+  <video id="bgVideo" autoplay style="z-index:1; position: absolute; width:500px; height:281px;"></video>
+
+  <img id="fgFrame" style="position:absolute; z-index:2147483647;filter:saturate(200%); width:500px; height:281px;">
+  <svg id="sketch_svg" width="500" height="281" style="position:absolute; z-index:300">
+    <polyline id="sketch_polyline" style="fill:none;stroke:green;stroke-width:8" />
+    <polyline id="sketch_pointer" style="fill:none;stroke:blue;stroke-width:20" />
+  </svg>
+
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+  <script src="main3.js"></script>
+
+</body>
+
+</html>
